@@ -22,7 +22,7 @@
     <joint name="base_frame_joint" type="fixed">
         <parent link="base_link" />
         <child link="frame" />
-        <origin xyz="0 0 ${frame_offset_z}" rpy="0 0 0" />
+        <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" />
     </joint>
 
     <link name="frame">
@@ -48,4 +48,69 @@
     <gazebo reference="frame">
         <material>Gazebo/Turquoise</material>
     </gazebo>
+
+    <!-- FRONT OR STEERING WHEEL -->
+    <joint name="steering_joint" type="continuous">
+        <axis xyz="1 0 0" />
+        <parent link="frame" />
+        <child link="front_wheel" />
+        <origin xyz="0 ${wheel_separation/2} 0" rpy="0 ${pi/2} 0" />
+    </joint>
+
+    <link name="front_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="${wheel_radius}" />
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
+            radius="${wheel_radius}">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:inertial_cylinder>
+    </link>
+
+    <gazebo reference="front_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+    <!-- BACK OR TRACTION WHEEL -->
+    <joint name="traction_joint" type="continuous">
+        <axis xyz="0 0 1" />
+        <parent link="frame" />
+        <child link="back_wheel" />
+        <origin xyz="0 ${-wheel_separation/2} 0" rpy="0 ${pi/2} 0" />
+    </joint>
+
+    <link name="back_wheel">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
+            </geometry>
+            <material name="black" />
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="${wheel_radius}" />
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
+            radius="${wheel_radius}">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:inertial_cylinder>
+    </link>
+
+    <gazebo reference="back_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
 </robot>
