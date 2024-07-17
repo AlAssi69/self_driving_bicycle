@@ -2,7 +2,7 @@
 <robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
 
     <xacro:property name="wheel_radius" value="0.25" />
-    <xacro:property name="wheel_thickness" value="0.1" />
+    <xacro:property name="wheel_thickness" value="0.2" />
     <xacro:property name="wheel_separation" value="0.98" />
     <xacro:property name="wheel_mass" value="1.0" />
 
