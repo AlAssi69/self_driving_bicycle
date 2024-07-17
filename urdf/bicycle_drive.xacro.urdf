@@ -5,6 +5,7 @@
     <xacro:include filename="materials.xacro" />
     <xacro:include filename="properties.xacro" />
     <xacro:include filename="inertial.xacro" />
+    <xacro:include filename="lidar.xacro" />
 
     <!-- BASE LINK -->
     <link name="base_link" />
@@ -79,6 +80,8 @@
 
     <gazebo reference="front_wheel">
         <material>Gazebo/Black</material>
+        <mu1 value="0.001" />
+        <mu2 value="0.001" />
     </gazebo>
 
     <!-- BACK OR TRACTION WHEEL -->
