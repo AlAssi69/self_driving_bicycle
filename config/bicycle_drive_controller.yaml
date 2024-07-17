@@ -3,26 +3,5 @@ controller_manager:
     update_rate: 100.0
     use_sim_time: true
 
-    #bicycle_steering_cont:
-    # type: bicycle_steering_controller/BicycleSteeringController
-
-    joint_broad:
+    joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-# bicycle_steering_cont:
-#   ros__parameters:
-#     reference_timeout: 0.0
-#     front_steering: true
-#     open_loop: false
-#     velocity_rolling_window_size: 10
-#     enable_odom_tf: true
-#     odom_frame_id: "odom"
-#     position_feedback: false
-#     in_chained_mode: false
-#     use_stamped_vel: false
-#     # front_wheels_names: [frame_head_joint]
-#     # front_wheels_names: [screw_front_wheel_joint]
-#     front_wheels_names: [frame_head_joint, screw_front_wheel_joint]
-#     rear_wheels_names: [screw_back_wheel_joint]
-#     wheelbase: 0.98
-#     front_wheel_radius: 0.25
-#     rear_wheel_radius: 0.25

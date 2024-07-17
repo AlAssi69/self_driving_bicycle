@@ -24,14 +24,16 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
-                os.path.join(get_package_share_directory("gazebo_ros"), "launch"),
-                "/gazebo.launch.py",
+                os.path.join(
+                    get_package_share_directory("gazebo_ros"),
+                    "launch",
+                    "gazebo.launch.py",
+                ),
             ]
         ),
     )
 
     pkg_path = os.path.join(pkg_share_directory)
-
     xacro_file = os.path.join(pkg_path, "urdf", "bicycle_drive.xacro.urdf")
 
     # Method 1
@@ -113,10 +115,10 @@ def generate_launch_description():
             #         on_exit=[load_bicycle_controller],
             #     )
             # ),
+            node_robot_state_publisher,
             gazebo,
+            spawn_entity,
             # rviz,
             # node_joint_state_publisher_gui,
-            node_robot_state_publisher,
-            spawn_entity,
         ]
     )
