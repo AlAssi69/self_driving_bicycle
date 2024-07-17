@@ -51,6 +51,13 @@ def generate_launch_description():
         parameters=[params],
     )
 
+    node_joint_state_publisher_gui = Node(
+        package="joint_state_publisher_gui",
+        executable="joint_state_publisher_gui",
+        name="joint_state_publisher_gui",
+        arguments=[xacro_file],
+    )
+
     spawn_entity = Node(
         package="gazebo_ros",
         executable="spawn_entity.py",
@@ -109,6 +116,7 @@ def generate_launch_description():
             # gazebo,
             rviz,
             node_robot_state_publisher,
+            node_joint_state_publisher_gui,
             # spawn_entity,
         ]
     )
