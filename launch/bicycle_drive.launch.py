@@ -47,6 +47,7 @@ def generate_launch_description():
     params = {"robot_description": robot_description_raw}
 
     node_robot_state_publisher = Node(
+        name="robot_state_publisher",
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="screen",
@@ -86,7 +87,7 @@ def generate_launch_description():
             "load_controller",
             "--set-state",
             "active",
-            "tricycle_controller",
+            "bicycle_controller",
         ],
         output="screen",
     )
@@ -103,22 +104,22 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            rviz,
+            # node_joint_state_publisher_gui,
+            node_robot_state_publisher,
+            gazebo,
+            spawn_entity,
             RegisterEventHandler(
                 event_handler=OnProcessExit(
                     target_action=spawn_entity,
                     on_exit=[load_joint_state_broadcaster],
                 )
             ),
-            # RegisterEventHandler(
-            #     event_handler=OnProcessExit(
-            #         target_action=load_joint_state_broadcaster,
-            #         on_exit=[load_bicycle_controller],
-            #     )
-            # ),
-            node_robot_state_publisher,
-            gazebo,
-            spawn_entity,
-            # rviz,
-            # node_joint_state_publisher_gui,
+            RegisterEventHandler(
+                event_handler=OnProcessExit(
+                    target_action=load_joint_state_broadcaster,
+                    on_exit=[load_bicycle_controller],
+                )
+            ),
         ]
     )

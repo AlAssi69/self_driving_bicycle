@@ -11,28 +11,25 @@
                 <param name="min">-1.570796327</param>
                 <param name="max">+1.570796327</param>
             </command_interface>
-            <command_interface name="velocity">
-                <param name="min">-1.0</param>
-                <param name="max">+1.0</param>
-            </command_interface>
-
             <state_interface name="position" />
             <state_interface name="velocity" />
         </joint>
+
         <joint name="traction_joint">
             <command_interface name="velocity">
                 <param name="min">-1.0</param>
                 <param name="max">+1.0</param>
             </command_interface>
-
             <state_interface name="position" />
             <state_interface name="velocity" />
         </joint>
     </ros2_control>
 
     <gazebo>
-        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-            <parameters>$(find self_driving_bicycle)/config/bicycle_drive_controller.yaml</parameters>
+        <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+            <parameters>
+                $(find self_driving_bicycle)/config/bicycle_drive_controller.yaml
+            </parameters>
         </plugin>
     </gazebo>
 
