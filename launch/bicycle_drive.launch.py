@@ -77,7 +77,7 @@ def generate_launch_description():
         output="screen",
     )
 
-    load_tricycle_controller = ExecuteProcess(
+    load_bicycle_controller = ExecuteProcess(
         cmd=[
             "ros2",
             "control",
@@ -101,22 +101,22 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            # RegisterEventHandler(
-            #     event_handler=OnProcessExit(
-            #         target_action=spawn_entity,
-            #         on_exit=[load_joint_state_broadcaster],
-            #     )
-            # ),
+            RegisterEventHandler(
+                event_handler=OnProcessExit(
+                    target_action=spawn_entity,
+                    on_exit=[load_joint_state_broadcaster],
+                )
+            ),
             # RegisterEventHandler(
             #     event_handler=OnProcessExit(
             #         target_action=load_joint_state_broadcaster,
-            #         on_exit=[load_tricycle_controller],
+            #         on_exit=[load_bicycle_controller],
             #     )
             # ),
-            # gazebo,
-            rviz,
+            gazebo,
+            # rviz,
+            # node_joint_state_publisher_gui,
             node_robot_state_publisher,
-            node_joint_state_publisher_gui,
-            # spawn_entity,
+            spawn_entity,
         ]
     )
