@@ -69,7 +69,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="${wheel_radius}" />
+                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
@@ -103,7 +103,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="${wheel_radius}" />
+                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
             </geometry>
         </collision>
         <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
