@@ -89,7 +89,7 @@
         <axis xyz="0 0 1" />
         <parent link="frame" />
         <child link="back_wheel" />
-        <origin xyz="0 ${-wheel_separation/2} 0" rpy="0 ${pi/2} 0" />
+        <origin xyz="0 ${-wheel_separation/2} 0" rpy="0 ${-pi/2} 0" />
     </joint>
 
     <link name="back_wheel">
