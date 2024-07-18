@@ -50,12 +50,44 @@
         <material>Gazebo/Turquoise</material>
     </gazebo>
 
-    <!-- FRONT OR STEERING WHEEL -->
+    <!-- STEERING LINK -->
     <joint name="steering_joint" type="continuous">
-        <axis xyz="1 0 0" />
+        <axis xyz="0 0 1" />
         <parent link="frame" />
+        <child link="steering_link" />
+        <origin xyz="0 ${wheel_separation/2} 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="steering_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="${box_length} ${box_length} ${box_length}" />
+            </geometry>
+            <material name="white" />
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="${box_length} ${box_length} ${box_length}" />
+            </geometry>
+        </collision>
+        <xacro:inertial_box mass="${box_mass}"
+            x="${box_length}" y="${box_length}" z="${box_length}">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:inertial_box>
+    </link>
+
+    <gazebo reference="steering_link">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+    <!-- FRONT WHEEL -->
+    <joint name="front_traction_joint" type="continuous">
+        <axis xyz="0 0 1" />
+        <parent link="steering_link" />
         <child link="front_wheel" />
-        <origin xyz="0 ${wheel_separation/2} 0" rpy="0 ${pi/2} 0" />
+        <origin xyz="0 0 0" rpy="0 ${-pi/2} 0" />
     </joint>
 
     <link name="front_wheel">
@@ -80,8 +112,6 @@
 
     <gazebo reference="front_wheel">
         <material>Gazebo/Black</material>
-        <mu1 value="0.001" />
-        <mu2 value="0.001" />
     </gazebo>
 
     <!-- BACK OR TRACTION WHEEL -->
