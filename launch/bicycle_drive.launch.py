@@ -96,7 +96,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             rviz,
-            node_joint_state_publisher_gui,
+            # node_joint_state_publisher_gui,
             node_robot_state_publisher,
             gazebo,
             spawn_entity,
