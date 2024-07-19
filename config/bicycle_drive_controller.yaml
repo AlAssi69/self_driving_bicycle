@@ -9,13 +9,6 @@ controller_manager:
 
 bicycle_controller:
   ros__parameters:
-    reference_timeout: 0.0
-    front_steering: true
-    open_loop: false
-    velocity_rolling_window_size: 10
-    enable_odom_tf: true
-    odom_frame_id: "odom"
-    position_feedback: false
     in_chained_mode: false
     use_stamped_vel: false
     front_wheels_names: [steering_joint] # front_traction_joint]
