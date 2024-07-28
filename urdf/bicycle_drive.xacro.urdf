@@ -84,7 +84,7 @@
 
     <!-- FRONT WHEEL -->
     <joint name="front_traction_joint" type="continuous">
-        <!-- <mimic joint="traction_joint" /> -->
+        <mimic joint="traction_joint" />
         <axis xyz="0 0 1" />
         <parent link="steering_link" />
         <child link="front_wheel" />
@@ -147,8 +147,8 @@
 
     <gazebo reference="back_wheel">
         <material>Gazebo/Black</material>
-        <mu1 value="0.5" />
-        <mu2 value="0.5" />
+        <!-- <mu1 value="0.5" /> -->
+        <!-- <mu2 value="0.5" /> -->
     </gazebo>
 
     <xacro:include filename="ros2_control.xacro" />
