@@ -4,10 +4,12 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import (
+    DeclareLaunchArgument,
     ExecuteProcess,
     IncludeLaunchDescription,
     RegisterEventHandler,
 )
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -20,6 +22,21 @@ pkg_share_directory = get_package_share_directory(pkg_name)
 
 
 def generate_launch_description():
+
+    slam_params_file = LaunchConfiguration("slam_params_file")
+    use_sim_time = LaunchConfiguration("use_sim_time")
+
+    slam_params_file_arg = DeclareLaunchArgument(
+        "slam_params_file",
+        default_value=os.path.join(
+            pkg_share_directory, "config", "mapper_params_online_async.yaml"
+        ),
+        description="Full path to the ROS2 parameters file to use for the slam_toolbox node",
+    )
+
+    use_sim_time_arg = DeclareLaunchArgument(
+        "use_sim_time", default_value="true", description="Use simulation/Gazebo clock"
+    )
 
     pkg_path = os.path.join(pkg_share_directory)
     xacro_file = os.path.join(pkg_path, "urdf", "bicycle_drive.xacro.urdf")
@@ -93,11 +110,48 @@ def generate_launch_description():
         output="screen",
     )
 
+    static_transform_base_link = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=[
+            "--x",
+            "0",
+            "--y",
+            "0",
+            "--z",
+            "0",
+            "--yaw",
+            "0",
+            "--pitch",
+            "0",
+            "--roll",
+            "0",
+            "--frame-id",
+            "odom",
+            "--child-frame-id",
+            "base_link",
+        ],
+    )
+
+    odom_broadcaster = Node(
+        package=pkg_name, executable="odom_broadcaster", name="odom_broadcaster"
+    )
+
+    slam_node = Node(
+        parameters=[slam_params_file, {"use_sim_time": use_sim_time}],
+        package="slam_toolbox",
+        executable="async_slam_toolbox_node",
+        name="slam_toolbox",
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             rviz,
             # node_joint_state_publisher_gui,
             node_robot_state_publisher,
+            # static_transform_base_link,
+            odom_broadcaster,
             gazebo,
             spawn_entity,
             RegisterEventHandler(
@@ -112,5 +166,8 @@ def generate_launch_description():
                     on_exit=[load_bicycle_controller],
                 )
             ),
+            use_sim_time_arg,
+            slam_params_file_arg,
+            slam_node,
         ]
     )
