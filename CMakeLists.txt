@@ -6,9 +6,30 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_msgs REQUIRED)
+
+add_executable(odom_broadcaster src/odom_broadcaster.cpp)
+
+ament_target_dependencies(
+  odom_broadcaster
+  geometry_msgs
+  rclcpp
+  tf2
+  tf2_ros
+  tf2_msgs
+)
 
 install(
-  DIRECTORY config include launch src urdf worlds
+  TARGETS odom_broadcaster
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY config include launch maps src urdf worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
