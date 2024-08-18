@@ -54,10 +54,10 @@ void OdomPublisher::handleOdomTransform(const std::shared_ptr<tf2_msgs::msg::TFM
 
     odomTransform.transform.translation.x = tfMsg->transforms.data()->transform.translation.x;
     odomTransform.transform.translation.y = tfMsg->transforms.data()->transform.translation.y;
-    odomTransform.transform.translation.z = tfMsg->transforms.data()->transform.translation.z;
+    odomTransform.transform.translation.z = 0;
 
-    odomTransform.transform.rotation.x = tfMsg->transforms.data()->transform.rotation.x;
-    odomTransform.transform.rotation.y = tfMsg->transforms.data()->transform.rotation.y;
+    odomTransform.transform.rotation.x = 0;
+    odomTransform.transform.rotation.y = 0;
     odomTransform.transform.rotation.z = tfMsg->transforms.data()->transform.rotation.z;
     odomTransform.transform.rotation.w = tfMsg->transforms.data()->transform.rotation.w;
 
