@@ -11,6 +11,8 @@ find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_msgs REQUIRED)
+find_package(rcutils REQUIRED)
+find_package(rmw REQUIRED)
 
 add_executable(odom_broadcaster src/odom_broadcaster.cpp)
 
