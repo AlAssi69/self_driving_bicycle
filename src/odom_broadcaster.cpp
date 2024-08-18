@@ -9,12 +9,21 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_msgs/msg/tf_message.hpp"
 
+#include "rosgraph_msgs/msg/clock.hpp"
+
+using std::placeholders::_1;
+
 class OdomPublisher : public rclcpp::Node
 {
-    rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr subscription_;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    rclcpp::Subscription<rosgraph_msgs::msg::Clock>::SharedPtr clkSubscription;
+    rosgraph_msgs::msg::Clock clkPulse;
+
+    rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr odomSubscription;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
+    geometry_msgs::msg::TransformStamped odomTransform;
 
     void handleOdomTransform(const std::shared_ptr<tf2_msgs::msg::TFMessage>);
+    void handleClock(const rosgraph_msgs::msg::Clock &clkPulse) { this->clkPulse = clkPulse; }
 
 public:
     OdomPublisher();
@@ -22,32 +31,37 @@ public:
 
 OdomPublisher::OdomPublisher() : Node("odom_publisher")
 {
-    tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    tfBroadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-    subscription_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
+    clkSubscription = this->create_subscription<rosgraph_msgs::msg::Clock>(
+        "/clock",
+        rclcpp::QoS(RMW_QOS_POLICY_HISTORY_SYSTEM_DEFAULT).best_effort(),
+        std::bind(&OdomPublisher::handleClock, this, _1));
+
+    odomSubscription = this->create_subscription<tf2_msgs::msg::TFMessage>(
         "/bicycle_controller/tf_odometry",
         10,
-        std::bind(&OdomPublisher::handleOdomTransform, this, std::placeholders::_1));
+        std::bind(&OdomPublisher::handleOdomTransform, this, _1));
 }
 
-void OdomPublisher::handleOdomTransform(const std::shared_ptr<tf2_msgs::msg::TFMessage> msg)
+void OdomPublisher::handleOdomTransform(const std::shared_ptr<tf2_msgs::msg::TFMessage> tfMsg)
 {
-    geometry_msgs::msg::TransformStamped odomTransform;
+    odomTransform.header.stamp.sec = clkPulse.clock.sec;
+    odomTransform.header.stamp.nanosec = clkPulse.clock.nanosec;
+    odomTransform.header.frame_id = tfMsg->transforms.data()->header.frame_id;
 
-    odomTransform.header.stamp = msg->transforms.data()->header.stamp;
-    odomTransform.header.frame_id = msg->transforms.data()->header.frame_id;
-    odomTransform.child_frame_id = msg->transforms.data()->child_frame_id;
+    odomTransform.child_frame_id = tfMsg->transforms.data()->child_frame_id;
 
-    odomTransform.transform.translation.x = msg->transforms.data()->transform.translation.x;
-    odomTransform.transform.translation.y = msg->transforms.data()->transform.translation.y;
-    odomTransform.transform.translation.z = msg->transforms.data()->transform.translation.z;
+    odomTransform.transform.translation.x = tfMsg->transforms.data()->transform.translation.x;
+    odomTransform.transform.translation.y = tfMsg->transforms.data()->transform.translation.y;
+    odomTransform.transform.translation.z = tfMsg->transforms.data()->transform.translation.z;
 
-    odomTransform.transform.rotation.x = msg->transforms.data()->transform.rotation.x;
-    odomTransform.transform.rotation.y = msg->transforms.data()->transform.rotation.y;
-    odomTransform.transform.rotation.z = msg->transforms.data()->transform.rotation.z;
-    odomTransform.transform.rotation.w = msg->transforms.data()->transform.rotation.w;
+    odomTransform.transform.rotation.x = tfMsg->transforms.data()->transform.rotation.x;
+    odomTransform.transform.rotation.y = tfMsg->transforms.data()->transform.rotation.y;
+    odomTransform.transform.rotation.z = tfMsg->transforms.data()->transform.rotation.z;
+    odomTransform.transform.rotation.w = tfMsg->transforms.data()->transform.rotation.w;
 
-    tf_broadcaster_->sendTransform(odomTransform);
+    tfBroadcaster->sendTransform(odomTransform);
 }
 
 int main(int argc, char *argv[])
