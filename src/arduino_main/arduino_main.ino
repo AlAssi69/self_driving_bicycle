@@ -62,73 +62,43 @@ class StepperMotor
     }
 };
 
-int inputPin, edge, debounceDelay;
-long currentTime, lastTime;
-int count;
-
-class IRSensor
-{
-  public:
-    IRSensor(int inputPin = 2, int edge = RISING, int debounceDelay = 50)
-    {
-      inputPin = inputPin;
-      edge = edge;
-      debounceDelay = debounceDelay;
-      lastTime = 0;
-
-      pinMode(inputPin, INPUT);
-      attachInterrupt(digitalPinToInterrupt(inputPin), IRSensor::countRevolutions, edge);
-    }
-
-    static void countRevolutions()
-    {
-      currentTime = millis();
-      if (currentTime - lastTime >= debounceDelay)
-      {
-        count++;
-        lastTime = currentTime;
-      }
-    }
-
-    int getCount()
-    {
-      return count;
-    }
-};
-
-void getYawAngle()
-{
-  Wire.requestFrom(SLAVE_ADDRESS, ANSWER_SIZE);
-
-  while (Wire.available())
-  {
-    yaw_char = Wire.read();
-    yaw_string += yaw_char;
-  }
-}
+volatile int count = 0;
+const int sensorPin = 2
+volatile unsigned long lastTime = 0;  
+const unsigned long debounceDelay = 50; // Set an appropriate debounce time (in milliseconds)  
 
 DCMotor dc;
 StepperMotor stepper;
-IRSensor ir;
 
 int speed;
 int angle;
 
+void countRevolutions() {  
+    unsigned long currentTime = millis();  
+    if (currentTime - lastTime >= debounceDelay) {  
+        count++; // Increase count on each valid detection  
+        lastTime = currentTime; // Update lastTime to current time  
+    }  
+}
+
 void setup()
 {
   //attachInterrupt(digitalPinToInterrupt(ir.inputPin), ir.countRevolutions, ir.edge);
-  Wire.begin();
+  //Wire.begin();
 
+  pinMode(sensorPin, INPUT);  
+  attachInterrupt(digitalPinToInterrupt(sensorPin), countRevolutions, RISING);  
   while (!Serial)
   {
   }
 
   Serial.begin(9600);
+  Serial.println("Starting...");
 }
 
 String in = "";           // a variable to hold the input from the serial
 String* in_split;         // this is used to split the input (e.g., 90 90 90) and hold the 3 values
-int qtde;                 // don't mind this variable (it holds the count)
+int qtde;                 // don't mind this variable (it holds thecount)
 
 // split function
 String* split(String& v, char delimiter, int& length)
@@ -171,25 +141,43 @@ String* split(String& v, char delimiter, int& length)
   // No delimiter found
   return nullptr;
 }
+
 void loop()
 {
-  if (Serial.available() > 0)
+  if(Serial.available()>0)
   {
-    in = Serial.read();
+    in = Serial.readString();
+    in.trim();
+    Serial.println(in);
     in_split = split(in, ' ', qtde);
-    // read from serial
+
     speed = in_split[0].toInt();
     dc.move(speed);
 
     angle = in_split[1].toInt();
     stepper.move(angle);
-  }
 
-  getYawAngle();
+    Serial.print("Speed: ");
+    Serial.print(speed);
+    Serial.print("\tAngle: ");
+    Serial.println(angle);
 
-  Serial.print(yaw_string);
-  Serial.print(" ");
-  Serial.println(ir.getCount());
+    /*
+    Wire.requestFrom(SLAVE_ADDRESS, ANSWER_SIZE);
 
-  delay(10);
+    while (Wire.available())
+    {
+      yaw_char = Wire.read();
+      yaw_string += yaw_char;
+    }
+
+    Serial.print("Yaw: ");
+    Serial.print(yaw_string);
+    */
+    Serial.print("\tCount: ");
+    Serial.println(count / 8);
+    
+  } 
+  
+    delay(10);
 }
