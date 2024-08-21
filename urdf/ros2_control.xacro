@@ -39,6 +39,11 @@
             <parameters>
                 $(find self_driving_bicycle)/config/bicycle_drive_controller.yaml
             </parameters>
+            <ros>
+                <remapping>
+                    /bicycle_controller/tf_odometry:=/tf
+                </remapping>
+            </ros>
         </plugin>
     </gazebo>
 
