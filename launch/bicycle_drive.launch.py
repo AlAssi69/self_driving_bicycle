@@ -106,9 +106,6 @@ def generate_launch_description():
             "--set-state",
             "active",
             "bicycle_controller",
-            # "--ros-args",
-            # "--remap",
-            # "/tf_odometry:=/tf",
         ],
         output="screen",
     )
@@ -136,10 +133,6 @@ def generate_launch_description():
         ],
     )
 
-    odom_broadcaster = Node(
-        package=pkg_name, executable="odom_broadcaster", name="odom_broadcaster"
-    )
-
     slam_node = Node(
         parameters=[slam_params_file, {"use_sim_time": use_sim_time}],
         package="slam_toolbox",
@@ -154,7 +147,6 @@ def generate_launch_description():
             # node_joint_state_publisher_gui,
             node_robot_state_publisher,
             # static_transform_base_link,
-            odom_broadcaster,
             gazebo,
             spawn_entity,
             RegisterEventHandler(
