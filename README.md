@@ -1,3 +1,2 @@
 # Self-Driving Bicycle
-This package contains the necessary tools for simulating a self-driving bicycle.
-It includes the URDF model, controllers, SLAM toolbox, and Navigation to implement the bicycle.
+This package contains the simulation and hardware interface for a self-driving bicycle. It includes the URDF model, and the controllers for simulation purposes. And a hardware interface for real-world implementation.
