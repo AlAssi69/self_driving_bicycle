@@ -8,4 +8,4 @@ You can find the hardware implementation [here](https://github.com/AlAssi69/self
 By:
   [Ashraf AlAssi](https://github.com/AlAssi69/),
   [Mhd. Osama Keakaty](https://github.com/Osama-keakaty),
-  [Sarah AlAhmad](https://github.com/SarahAlahmad).
+  and [Sarah AlAhmad](https://github.com/SarahAlahmad).
