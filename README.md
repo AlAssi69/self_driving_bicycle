@@ -6,6 +6,6 @@ And it's part of our graduation project in Damascus University, Computer and Aut
 You can find the hardware implementation [here](https://github.com/AlAssi69/self_driving_bicycle_hw).
 
 By:
-  [Ashraf AlAssi](https://github.com/AlAssi69/)
-  [Mhd. Osama Keakaty](https://github.com/Osama-keakaty)
-  [Sarah AlAhmad](https://github.com/SarahAlahmad)
+  [Ashraf AlAssi](https://github.com/AlAssi69/),
+  [Mhd. Osama Keakaty](https://github.com/Osama-keakaty),
+  [Sarah AlAhmad](https://github.com/SarahAlahmad).
