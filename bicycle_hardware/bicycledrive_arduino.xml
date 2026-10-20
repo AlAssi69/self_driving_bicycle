@@ -1,0 +1,9 @@
+<library path="bicycledrive_arduino">
+  <class name="bicycledrive_arduino/BicycleDriveArduinoHardware"
+    type="bicycledrive_arduino::BicycleDriveArduinoHardware"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface for bicyclebot.
+    </description>
+  </class>
+</library>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <joint name="frame_lidar" type="fixed">
+        <parent link="frame" />
+        <child link="laser_frame" />
+        <origin xyz="0 0 ${wheel_radius+0.01}" rpy="0 0 0" />
+    </joint>
+
+    <link name="laser_frame">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <cylinder length="0.01" radius="0.07" />
+            </geometry>
+            <material name="black" />
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.01" radius="0.07" />
+            </geometry>
+        </collision>
+        <xacro:inertial_cylinder mass="0.5" length="0.01" radius="0.07">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:inertial_cylinder>
+    </link>
+
+</robot>

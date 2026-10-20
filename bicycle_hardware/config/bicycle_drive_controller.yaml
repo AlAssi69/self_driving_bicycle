@@ -1,0 +1,18 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000
+
+    bicycle_controller:
+      type: bicycle_steering_controller/BicycleSteeringController
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+bicycle_controller:
+  ros__parameters:
+    in_chained_mode: false
+    use_stamped_vel: false
+    front_wheels_names: [steering_joint]
+    rear_wheels_names: [traction_joint]
+    wheelbase: 0.98
+    front_wheel_radius: 0.25
+    rear_wheel_radius: 0.25

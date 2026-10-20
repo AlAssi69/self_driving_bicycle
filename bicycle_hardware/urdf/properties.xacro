@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:property name="box_length" value="0.01" />
+    <xacro:property name="box_mass" value="0.005" />
+
+    <xacro:property name="wheel_radius" value="0.25" />
+    <xacro:property name="wheel_thickness" value="0.2" />
+    <xacro:property name="wheel_separation" value="0.98" />
+    <xacro:property name="wheel_mass" value="1.0" />
+
+    <xacro:property name="frame_mass" value="1.5" />
+
+    <xacro:property name="cylindar_radius" value="0.01" />
+
+</robot>
