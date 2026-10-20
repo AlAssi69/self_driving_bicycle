@@ -21,8 +21,14 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_consistency test/test_consistency.py)
   ament_add_pytest_test(test_launch_files test/test_launch_files.py)
 
-  # Starts Gazebo headless; slow, so it carries its own label (ctest -L / -LE sim_integration).
   find_package(launch_testing_ament_cmake REQUIRED)
+  # The real-robot stack against the fake Arduino; needs no GPU.
+  add_launch_test(test/integration/test_robot_integration.py
+    TARGET test_robot_integration
+    TIMEOUT 180
+  )
+
+  # Starts Gazebo headless; slow, so it carries its own label (ctest -L / -LE sim_integration).
   add_launch_test(test/integration/test_sim_integration.py
     TARGET test_sim_integration
     TIMEOUT 300

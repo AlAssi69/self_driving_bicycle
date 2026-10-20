@@ -55,7 +55,7 @@ target_link_libraries(fake_mcu PRIVATE bicycle_fake_mcu)
 install(TARGETS bicycle_hardware LIBRARY DESTINATION lib)
 install(TARGETS fake_mcu RUNTIME DESTINATION lib/${PROJECT_NAME})
 install(
-  DIRECTORY config launch udev
+  DIRECTORY config firmware launch udev
   DESTINATION share/${PROJECT_NAME}
 )
 

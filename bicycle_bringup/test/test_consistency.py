@@ -16,13 +16,15 @@
 Cross-package consistency checks.
 
 bicycle_description/config/geometry.yaml is the single source of truth for the robot.
-ROS parameter files cannot import it, so the values the controller and Nav2 repeat are
-checked against it here, together with the frame and topic contract between packages.
+ROS parameter files cannot import it, so the values the controller, Nav2 and the real
+robot's hardware and lidar configuration repeat are checked against it here, together with
+the frame and topic contract between packages and the Arduino firmware's limits.
 """
 
 import ast
 import math
 import os
+import re
 import xml.etree.ElementTree as ET
 
 from ament_index_python.packages import get_package_share_directory
@@ -164,3 +166,70 @@ def test_costmaps_share_the_footprint():
 def test_global_inflation_covers_the_footprint():
     circumscribed = max(math.hypot(x, y) for x, y in footprint('global_costmap'))
     assert costmap('global_costmap')['inflation_layer']['inflation_radius'] >= circumscribed
+
+
+# Real robot: bicycle_hardware's parameters and firmware against the same sources.
+
+HARDWARE = load('bicycle_hardware', 'config', 'hardware.yaml')
+LIDAR_DRIVER = load('bicycle_hardware', 'config', 'ydlidar.yaml')['ydlidar_ros2_driver_node'][
+    'ros__parameters'
+]
+FIRMWARE = share('bicycle_hardware', 'firmware', 'bicycle_uno')
+
+
+def firmware_constant(header, pattern):
+    with open(os.path.join(FIRMWARE, header)) as f:
+        match = re.search(pattern, f.read(), re.DOTALL)
+    assert match, f'{pattern} not found in {header}'
+    return [int(value) for value in match.groups()]
+
+
+def test_hardware_params_reach_the_plugin():
+    real = ET.fromstring(
+        xacro.process_file(
+            share('bicycle_description', 'urdf', 'bicycle.urdf.xacro'),
+            mappings={
+                'hardware_plugin': 'bicycle_hardware/BicycleSystemHardware',
+                'hardware_params_file': share('bicycle_hardware', 'config', 'hardware.yaml'),
+            },
+        ).toxml()
+    )
+    params = {p.get('name'): p.text for p in real.findall('./ros2_control/hardware/param')}
+    assert params == {key: str(value) for key, value in HARDWARE.items()}
+
+
+def test_serial_settings_match_the_firmware():
+    (baud_rate,) = firmware_constant('protocol.hpp', r'kBaudRate = (\d+);')
+    assert HARDWARE['baud_rate'] == baud_rate
+
+
+def test_firmware_hard_limits_cover_the_urdf_limits():
+    steps_per_rad = (
+        HARDWARE['steering_steps_per_rev']
+        * HARDWARE['steering_microsteps']
+        * HARDWARE['steering_gear_ratio']
+        / (2 * math.pi)
+    )
+    max_steps, max_speed, max_accel, max_pwm = firmware_constant(
+        'config.hpp', r'kHardLimits = \{\s*(\d+),.*?(\d+),.*?(\d+),.*?(\d+),'
+    )
+    assert max_steps >= round(MAX_STEERING * steps_per_rad)
+    assert max_speed >= GEOMETRY['steering']['max_velocity'] * steps_per_rad
+    assert max_accel >= HARDWARE['steering_max_acceleration'] * steps_per_rad
+    assert max_pwm >= HARDWARE['drive_max_pwm']
+
+
+def test_drive_can_reach_the_speed_limit():
+    wheel_speed = GEOMETRY['traction']['max_velocity']
+    pwm = HARDWARE['drive_feedforward'] * wheel_speed + HARDWARE['drive_deadband']
+    assert pwm <= HARDWARE['drive_max_pwm']
+
+
+def test_lidar_driver_matches_the_simulated_lidar():
+    lidar = GEOMETRY['lidar']
+    assert LIDAR_DRIVER['frame_id'] == 'laser_frame'
+    assert URDF.find("./link[@name='laser_frame']") is not None
+    assert LIDAR_DRIVER['range_min'] == pytest.approx(lidar['min_range'])
+    assert LIDAR_DRIVER['range_max'] == pytest.approx(lidar['max_range'])
+    assert LIDAR_DRIVER['frequency'] == pytest.approx(lidar['update_rate'])
+    assert SLAM['max_laser_range'] <= LIDAR_DRIVER['range_max']
