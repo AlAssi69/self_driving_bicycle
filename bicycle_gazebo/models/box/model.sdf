@@ -1,4 +1,4 @@
-<?xml version='1.0'?>
+<?xml version="1.0"?>
 <sdf version='1.7'>
   <model name='box'>
     <pose>2.9595 -0.650751 0 0 -0 0</pose>
@@ -19,15 +19,9 @@
           </box>
         </geometry>
         <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <ambient>1 1 1 1</ambient>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
         </material>
-        <meta>
-          <layer>0</layer>
-        </meta>
       </visual>
       <pose>-0 3.8 0 0 -0 0</pose>
     </link>
@@ -48,15 +42,9 @@
           </box>
         </geometry>
         <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <ambient>1 1 1 1</ambient>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
         </material>
-        <meta>
-          <layer>0</layer>
-        </meta>
       </visual>
       <pose>9.3 0 0 0 -0 -1.5708</pose>
     </link>
@@ -77,15 +65,9 @@
           </box>
         </geometry>
         <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <ambient>1 1 1 1</ambient>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
         </material>
-        <meta>
-          <layer>0</layer>
-        </meta>
       </visual>
       <pose>-0 -3.8 0 0 -0 3.14159</pose>
     </link>
@@ -106,15 +88,9 @@
           </box>
         </geometry>
         <material>
-          <script>
-            <uri>file://media/materials/scripts/gazebo.material</uri>
-            <name>Gazebo/Grey</name>
-          </script>
-          <ambient>1 1 1 1</ambient>
+          <ambient>0.6 0.6 0.6 1</ambient>
+          <diffuse>0.6 0.6 0.6 1</diffuse>
         </material>
-        <meta>
-          <layer>0</layer>
-        </meta>
       </visual>
       <pose>-9.3 0 0 0 -0 1.5708</pose>
     </link>
