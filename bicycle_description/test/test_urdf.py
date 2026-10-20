@@ -144,6 +144,24 @@ def test_hardware_plugin_selection(sim_urdf, mock_urdf):
     assert hardware_plugin(custom) == 'my_robot/MySystem'
 
 
+def test_hardware_params_come_from_the_params_file(tmp_path, sim_urdf, mock_urdf):
+    def params(urdf):
+        return {p.get('name'): p.text for p in urdf.findall('./ros2_control/hardware/param')}
+
+    params_file = tmp_path / 'hardware.yaml'
+    params_file.write_text('device: /dev/ttyACM0\nbaud_rate: 115200\nencoder_timeout_s: 2.0\n')
+    real = ET.fromstring(
+        process(hardware_plugin='my_robot/MySystem', hardware_params_file=str(params_file))
+    )
+    assert params(real) == {
+        'device': '/dev/ttyACM0',
+        'baud_rate': '115200',
+        'encoder_timeout_s': '2.0',
+    }
+    assert params(sim_urdf) == {}
+    assert params(mock_urdf) == {}
+
+
 def test_gazebo_plugin_only_in_simulation(sim_urdf, mock_urdf):
     def gz_plugins(urdf):
         return [

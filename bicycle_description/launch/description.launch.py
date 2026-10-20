@@ -37,6 +37,8 @@ def generate_launch_description():
                 LaunchConfiguration('use_sim'),
                 ' hardware_plugin:=',
                 LaunchConfiguration('hardware_plugin'),
+                ' hardware_params_file:=',
+                LaunchConfiguration('hardware_params_file'),
                 ' controllers_file:=',
                 LaunchConfiguration('controllers_file'),
             ]
@@ -60,6 +62,11 @@ def generate_launch_description():
                 'hardware_plugin',
                 default_value='',
                 description='ros2_control system plugin; empty selects it from use_sim.',
+            ),
+            DeclareLaunchArgument(
+                'hardware_params_file',
+                default_value='',
+                description='YAML file of hardware parameters for the plugin; empty for none.',
             ),
             DeclareLaunchArgument(
                 'controllers_file',

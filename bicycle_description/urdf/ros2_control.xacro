@@ -1,17 +1,28 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+    <!-- One <param name="key">value</param> per (key, value) pair of `params`. -->
+    <xacro:macro name="hardware_params" params="params">
+        <xacro:if value="${params}">
+            <param name="${params[0][0]}">${params[0][1]}</param>
+            <xacro:hardware_params params="${params[1:]}" />
+        </xacro:if>
+    </xacro:macro>
+
     <!--
       ros2_control system of the bicycle. The hardware plugin is injected so the same
       description serves Gazebo, mock hardware (tests) and the real robot.
       hardware_plugin:  ros2_control SystemInterface plugin name
+      hardware_params:  list of (name, value) hardware parameters of the plugin
       use_sim:          add the gz_ros2_control Gazebo system plugin
       controllers_file: controller parameter file loaded by gz_ros2_control (use_sim only)
     -->
-    <xacro:macro name="bicycle_ros2_control" params="hardware_plugin use_sim controllers_file">
+    <xacro:macro name="bicycle_ros2_control"
+        params="hardware_plugin hardware_params use_sim controllers_file">
         <ros2_control name="BicycleSystem" type="system">
             <hardware>
                 <plugin>${hardware_plugin}</plugin>
+                <xacro:hardware_params params="${hardware_params}" />
             </hardware>
 
             <!-- Front-wheel steering: position command. -->

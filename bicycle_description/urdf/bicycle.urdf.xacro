@@ -10,12 +10,16 @@
     use_sim           "true" adds the Gazebo (gz_ros2_control) system plugin
     hardware_plugin   ros2_control system plugin; empty selects GazeboSimSystem when
                       use_sim is true, otherwise mock_components/GenericSystem
+    hardware_params_file
+                      YAML file of the plugin's hardware parameters (flat key: value);
+                      empty for none
     controllers_file  controller parameter file loaded by gz_ros2_control (use_sim only)
 -->
 <robot name="bicycle" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
     <xacro:arg name="use_sim" default="false" />
     <xacro:arg name="hardware_plugin" default="" />
+    <xacro:arg name="hardware_params_file" default="" />
     <xacro:arg name="controllers_file" default="" />
 
     <xacro:include filename="inertial.xacro" />
@@ -130,8 +134,10 @@
     <!-- ROS2 CONTROL -->
     <xacro:property name="default_hardware_plugin"
         value="${'gz_ros2_control/GazeboSimSystem' if use_sim else 'mock_components/GenericSystem'}" />
+    <xacro:property name="hardware_params_file" value="$(arg hardware_params_file)" />
     <xacro:bicycle_ros2_control
         hardware_plugin="${'$(arg hardware_plugin)' or default_hardware_plugin}"
+        hardware_params="${list(xacro.load_yaml(hardware_params_file).items()) if hardware_params_file else []}"
         use_sim="${use_sim}"
         controllers_file="$(arg controllers_file)" />
 
