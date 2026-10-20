@@ -18,7 +18,7 @@ concurrency:
 
 env:
   PACKAGES: >-
-    self_driving_bicycle bicycle_description bicycle_gazebo bicycle_control
+    self_driving_bicycle bicycle_description bicycle_gazebo bicycle_hardware bicycle_control
     bicycle_navigation bicycle_bringup
 
 jobs:
@@ -31,6 +31,26 @@ jobs:
           python-version: "3.12"
       - uses: pre-commit/action@v3.0.1
 
+  firmware:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/compile-sketches@v1
+        with:
+          cli-version: 1.1.1
+          fqbn: arduino:avr:uno
+          platforms: |
+            - name: arduino:avr
+              version: 1.8.6
+          libraries: |
+            - name: AccelStepper
+              version: 1.64
+          sketch-paths: |
+            - bicycle_hardware/firmware/bicycle_uno
+          cli-compile-flags: |
+            - --warnings
+            - all
+
   build-and-test:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -42,7 +62,8 @@ jobs:
         with:
           target-ros2-distro: jazzy
           package-name: ${{ env.PACKAGES }}
-          # Unit, consistency, launch and lint tests; the simulation test runs below.
+          # Unit, consistency, launch and lint tests, and the real-robot stack against the
+          # fake Arduino; the simulation test runs below.
           colcon-defaults: |
             {"test": {"ctest-args": ["-LE", "sim_integration"]}}
 
