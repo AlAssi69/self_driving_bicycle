@@ -1,3 +1,6 @@
+# slam_toolbox parameters, shared by mapping (async_slam_toolbox_node) and localization
+# (localization_slam_toolbox_node). launch/slam.launch.py picks the node from `mode` and,
+# for localization, injects map_file_name. use_sim_time is set by the launch file.
 slam_toolbox:
   ros__parameters:
     # Plugin params
@@ -12,28 +15,24 @@ slam_toolbox:
     odom_frame: odom
     map_frame: map
     base_frame: base_footprint
-    scan_topic: /laser_controller/out
+    scan_topic: /scan
     use_map_saver: true
-    mode: localization
-    #mode: mapping
 
-    # if you'd like to immediately start continuing a map at a given pose
-    # or at the dock, but they are mutually exclusive, if pose is given
-    # will use pose
-    map_file_name: /home/alassi69/final_ws/src/self_driving_bicycle/maps/map_serial
-    # map_start_pose: [0.0, 0.0, 0.0]
-    map_start_at_dock: true
+    # Serialized pose graph to start from (without extension). Empty: start a new map.
+    # In localization mode the launch file sets it from the `map` argument.
+    map_file_name: ""
+    map_start_pose: [0.0, 0.0, 0.0]  # pose of the robot in that map at startup [x, y, yaw]
 
     debug_logging: false
     throttle_scans: 1
-    transform_publish_period: 0.02 #if 0 never publishes odometry
+    transform_publish_period: 0.02  # if 0 never publishes odometry
     map_update_interval: 5.0
     resolution: 0.05
-    max_laser_range: 10.0 #for rastering images
+    max_laser_range: 10.0  # for rastering images; equals the lidar max range
     minimum_time_interval: 0.5
     transform_timeout: 0.2
-    tf_buffer_duration: 30.
-    stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000  # program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
     # General Parameters
