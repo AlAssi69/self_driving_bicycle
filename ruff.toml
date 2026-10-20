@@ -1,0 +1,12 @@
+# Kept compatible with ament_flake8 (run by `colcon test`): 99 columns, single quotes.
+line-length = 99
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "Q", "B", "UP"]
+
+[lint.flake8-quotes]
+inline-quotes = "single"
+
+[format]
+quote-style = "single"

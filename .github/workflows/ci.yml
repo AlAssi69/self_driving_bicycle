@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"  # nightly, mainly for the simulation test
+  workflow_dispatch:
+
+# Least privilege: the jobs only read the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PACKAGES: >-
+    self_driving_bicycle bicycle_description bicycle_gazebo bicycle_control
+    bicycle_navigation bicycle_bringup
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: pre-commit/action@v3.0.1
+
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+      - uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          target-ros2-distro: jazzy
+          package-name: ${{ env.PACKAGES }}
+          # Unit, consistency, launch and lint tests; the simulation test runs below.
+          colcon-defaults: |
+            {"test": {"ctest-args": ["-LE", "sim_integration"]}}
+
+  sim-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # Headless Gazebo with software rendering on GPU-less runners; non-blocking until it
+    # has proven stable there.
+    continue-on-error: true
+    steps:
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+      - name: Install software OpenGL/EGL
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri libglx-mesa0
+      - uses: ros-tooling/action-ros-ci@v0.4
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        with:
+          target-ros2-distro: jazzy
+          package-name: ${{ env.PACKAGES }}
+          colcon-defaults: |
+            {"test": {"ctest-args": ["-L", "sim_integration"]}}
