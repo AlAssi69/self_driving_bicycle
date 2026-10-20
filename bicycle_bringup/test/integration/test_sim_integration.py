@@ -20,6 +20,7 @@ Run it with:
 """
 
 import math
+import os
 import re
 import subprocess
 import time
@@ -28,7 +29,7 @@ import unittest
 from controller_manager_msgs.srv import ListControllers
 from geometry_msgs.msg import TwistStamped
 import launch
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 import launch_testing.actions
@@ -42,6 +43,9 @@ from std_msgs.msg import Bool
 
 STARTUP_TIMEOUT = 180.0  # [s] Gazebo with software rendering can be slow to start
 COMMAND_PERIOD = 0.05  # [s]
+# gz-transport ignores ROS_DOMAIN_ID; a private partition keeps the test's Gazebo from
+# talking to any other simulation running on the machine.
+GZ_PARTITION = 'bicycle_sim_integration_test'
 
 
 @pytest.mark.launch_test
@@ -49,6 +53,7 @@ COMMAND_PERIOD = 0.05  # [s]
 def generate_test_description():
     return launch.LaunchDescription(
         [
+            SetEnvironmentVariable('GZ_PARTITION', GZ_PARTITION),
             IncludeLaunchDescription(
                 PathJoinSubstitution(
                     [FindPackageShare('bicycle_bringup'), 'launch', 'sim_bringup.launch.py']
@@ -72,6 +77,7 @@ def gazebo_roll_pitch(model='bicycle', world='obstacles_course'):
         capture_output=True,
         text=True,
         timeout=20,
+        env=dict(os.environ, GZ_PARTITION=GZ_PARTITION),
     ).stdout
     match = re.search(
         r'name: "' + model + r'"\s*id: \d+\s*position \{[^}]*\}\s*orientation \{([^}]*)\}', text
