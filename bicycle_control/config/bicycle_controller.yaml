@@ -1,18 +1,34 @@
+# ros2_control controllers of the bicycle (Jazzy). Loaded by gz_ros2_control in simulation
+# and meant to be loaded by ros2_control_node on the real robot.
 controller_manager:
   ros__parameters:
-    update_rate: 1000
+    update_rate: 100  # [Hz]; the steering controller publishes odom/TF at this rate
 
-    bicycle_controller:
-      type: bicycle_steering_controller/BicycleSteeringController
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+    bicycle_controller:
+      type: bicycle_steering_controller/BicycleSteeringController
+
 bicycle_controller:
   ros__parameters:
-    in_chained_mode: false
-    use_stamped_vel: false
-    front_wheels_names: [steering_joint]
-    rear_wheels_names: [traction_joint]
+    # Geometry: must match bicycle_description/config/geometry.yaml
+    # (checked by bicycle_bringup/test/test_consistency.py).
     wheelbase: 0.98
-    front_wheel_radius: 0.25
-    rear_wheel_radius: 0.25
+    traction_wheel_radius: 0.25
+    traction_joints_names: [traction_joint]
+    steering_joints_names: [steering_joint]
+
+    # Command input: geometry_msgs/TwistStamped on ~/reference, written only by twist_mux.
+    reference_timeout: 0.5  # [s]; stop when commands stop arriving
+    reduce_wheel_speed_until_steering_reached: true
+
+    # Odometry from wheel and steering feedback. The pose is that of the rear axle
+    # (base_footprint), the reference point of the bicycle model.
+    open_loop: false
+    position_feedback: false  # traction joint feedback is a velocity
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    enable_odom_tf: true
+    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.01]

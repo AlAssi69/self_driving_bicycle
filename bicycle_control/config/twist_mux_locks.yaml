@@ -1,0 +1,8 @@
+# Locks (std_msgs/Bool). While a lock is true, every source with a lower priority is muted.
+twist_mux:
+  ros__parameters:
+    locks:
+      e_stop:
+        topic: e_stop
+        timeout: 0.0            # latched: stays engaged until false is published
+        priority: 255           # above every source, including teleop

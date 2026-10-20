@@ -1,11 +1,13 @@
+# Velocity command sources (geometry_msgs/TwistStamped). The highest-priority source that
+# published within its timeout wins; the output is the controller's ~/reference.
 twist_mux:
   ros__parameters:
     topics:
       navigation:
-        topic: cmd_vel
+        topic: cmd_vel          # Nav2 (after velocity_smoother and collision_monitor)
         timeout: 0.5
         priority: 10
-      controller:
-        topic: manual
+      teleop:
+        topic: cmd_vel_teleop   # keyboard / joystick
         timeout: 0.5
         priority: 100
