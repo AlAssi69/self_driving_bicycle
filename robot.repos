@@ -1,0 +1,14 @@
+# Robot-only dependencies that are not released as ROS packages: the YDLIDAR X4 Pro driver.
+# On the bicycle's computer, from the workspace's src/ directory:
+#   vcs import < self_driving_bicycle/robot.repos
+# then build the SDK first (docs/hardware.md):
+#   colcon build --packages-select ydlidar_sdk && colcon build
+repositories:
+  YDLidar-SDK:
+    type: git
+    url: https://github.com/YDLIDAR/YDLidar-SDK.git
+    version: 42a82ed10d2304094c111fc63dee8e4a229b79b7
+  ydlidar_ros2_driver:
+    type: git
+    url: https://github.com/YDLIDAR/ydlidar_ros2_driver.git
+    version: 4ef70d3f32a85704ade0be54b214f3763b1ab3e8  # humble branch

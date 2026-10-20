@@ -26,6 +26,7 @@ import subprocess
 import time
 import unittest
 
+from ament_index_python.packages import get_package_share_directory
 from controller_manager_msgs.srv import ListControllers
 from geometry_msgs.msg import TwistStamped
 import launch
@@ -40,6 +41,12 @@ import rclpy
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool
+import yaml
+
+with open(
+    os.path.join(get_package_share_directory('bicycle_description'), 'config', 'geometry.yaml')
+) as f:
+    GEOMETRY = yaml.safe_load(f)
 
 STARTUP_TIMEOUT = 180.0  # [s] Gazebo with software rendering can be slow to start
 COMMAND_PERIOD = 0.05  # [s]
@@ -163,9 +170,10 @@ class TestSimulatedBicycle(unittest.TestCase):
         self.spin_until(lambda: len(self.scans) >= 20, 30.0, 'too few /scan messages')
         scan = self.scans[-1]
         self.assertEqual(scan.header.frame_id, 'laser_frame')
-        self.assertEqual(len(scan.ranges), 360)
+        samples = GEOMETRY['lidar']['samples']
+        self.assertEqual(len(scan.ranges), samples)
         hits = [r for r in scan.ranges if math.isfinite(r)]
-        self.assertGreater(len(hits), 180, 'the arena walls should be visible')
+        self.assertGreater(len(hits), samples / 2, 'the arena walls should be visible')
 
     def test_3_teleop_drives_forward(self):
         self.spin_until(lambda: self.odom, 30.0, 'no /odom')

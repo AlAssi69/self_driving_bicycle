@@ -28,6 +28,7 @@ traction:
   max_velocity: 2.0        # rear wheel speed limit [rad/s] (= 0.5 m/s)
   max_effort: 10.0         # [N m]
 
+# YDLIDAR X4 Pro (bicycle_hardware/config/ydlidar.yaml): 5 kHz sampling at 10 Hz.
 lidar:
   radius: 0.05             # sensor puck [m]
   length: 0.04             # sensor puck [m]
@@ -35,6 +36,6 @@ lidar:
   mast_radius: 0.01        # [m]
   scan_height: 0.65        # scan plane above the ground; must clear the wheel tops [m]
   update_rate: 10.0        # [Hz]
-  samples: 360
-  min_range: 0.12          # [m]
-  max_range: 10.0          # [m]
+  samples: 500             # per revolution
+  min_range: 0.10          # [m]
+  max_range: 12.0          # [m]
