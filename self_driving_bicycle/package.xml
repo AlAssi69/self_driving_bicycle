@@ -4,8 +4,8 @@
   <name>self_driving_bicycle</name>
   <version>2.0.0</version>
   <description>
-    Metapackage of the self-driving bicycle simulation: robot description, Gazebo
-    simulation, ros2_control, SLAM, Nav2 and bringup.
+    Metapackage of the self-driving bicycle: robot description, Gazebo simulation, real
+    hardware interface, ros2_control, SLAM, Nav2 and bringup.
   </description>
   <maintainer email="smart.teen.12345@gmail.com">Ashraf AlAssi</maintainer>
   <license>Apache-2.0</license>
@@ -20,6 +20,7 @@
   <exec_depend>bicycle_control</exec_depend>
   <exec_depend>bicycle_description</exec_depend>
   <exec_depend>bicycle_gazebo</exec_depend>
+  <exec_depend>bicycle_hardware</exec_depend>
   <exec_depend>bicycle_navigation</exec_depend>
 
   <export>

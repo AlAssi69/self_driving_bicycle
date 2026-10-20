@@ -4,8 +4,9 @@
   <name>bicycle_bringup</name>
   <version>2.0.0</version>
   <description>
-    Top-level launch files, RViz configurations and teleoperation for the simulated
-    self-driving bicycle, plus the cross-package consistency and integration tests.
+    Top-level launch files (simulation and real robot), RViz configurations and
+    teleoperation for the self-driving bicycle, plus the cross-package consistency and
+    integration tests.
   </description>
   <maintainer email="smart.teen.12345@gmail.com">Ashraf AlAssi</maintainer>
   <license>Apache-2.0</license>
@@ -19,9 +20,11 @@
   <exec_depend>bicycle_control</exec_depend>
   <exec_depend>bicycle_description</exec_depend>
   <exec_depend>bicycle_gazebo</exec_depend>
+  <exec_depend>bicycle_hardware</exec_depend>
   <exec_depend>bicycle_navigation</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
 

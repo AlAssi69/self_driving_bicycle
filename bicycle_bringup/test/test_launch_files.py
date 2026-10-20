@@ -26,6 +26,7 @@ import pytest
 PACKAGES = (
     'bicycle_description',
     'bicycle_gazebo',
+    'bicycle_hardware',
     'bicycle_control',
     'bicycle_navigation',
     'bicycle_bringup',
@@ -37,10 +38,12 @@ LAUNCH_FILES = {
         'use_sim_time',
         'use_sim',
         'hardware_plugin',
+        'hardware_params_file',
         'controllers_file',
     },
     ('bicycle_description', 'display.launch.py'): set(),
     ('bicycle_gazebo', 'sim.launch.py'): {'world', 'headless', 'x', 'y', 'yaw'},
+    ('bicycle_hardware', 'hardware.launch.py'): {'lidar', 'lidar_params_file'},
     ('bicycle_control', 'control.launch.py'): {'use_sim_time', 'controller_manager_timeout'},
     ('bicycle_navigation', 'slam.launch.py'): {'use_sim_time', 'mode', 'map'},
     ('bicycle_navigation', 'navigation.launch.py'): {
@@ -50,6 +53,13 @@ LAUNCH_FILES = {
         'log_level',
     },
     ('bicycle_bringup', 'sim_bringup.launch.py'): {'slam', 'nav', 'rviz'},
+    ('bicycle_bringup', 'robot_bringup.launch.py'): {
+        'slam',
+        'nav',
+        'hardware_params_file',
+        'device',
+    },
+    ('bicycle_bringup', 'rviz.launch.py'): {'config', 'use_sim_time'},
 }
 
 

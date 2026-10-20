@@ -24,7 +24,6 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.substitutions import IfElseSubstitution, LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -42,13 +41,6 @@ def generate_launch_description():
     nav = LaunchConfiguration('nav')
     controllers_file = PathJoinSubstitution(
         [FindPackageShare('bicycle_control'), 'config', 'bicycle_controller.yaml']
-    )
-    rviz_config = PathJoinSubstitution(
-        [
-            FindPackageShare('bicycle_bringup'),
-            'rviz',
-            IfElseSubstitution(nav, 'navigation.rviz', 'slam.rviz'),
-        ]
     )
 
     return LaunchDescription(
@@ -83,12 +75,12 @@ def generate_launch_description():
             include(
                 'bicycle_navigation', 'navigation.launch.py', IfCondition(nav), use_sim_time='true'
             ),
-            Node(
-                package='rviz2',
-                executable='rviz2',
-                arguments=['-d', rviz_config],
-                parameters=[{'use_sim_time': True}],
-                condition=IfCondition(LaunchConfiguration('rviz')),
+            include(
+                'bicycle_bringup',
+                'rviz.launch.py',
+                IfCondition(LaunchConfiguration('rviz')),
+                config=IfElseSubstitution(nav, 'navigation', 'slam'),
+                use_sim_time='true',
             ),
         ]
     )
