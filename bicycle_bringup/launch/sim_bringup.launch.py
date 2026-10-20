@@ -1,168 +1,75 @@
-import os
+# Copyright 2024-2026 Ashraf AlAssi, Mhd. Osama Keakaty, Sarah AlAhmad
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from ament_index_python.packages import get_package_share_directory
+"""
+Bring up the simulated bicycle: Gazebo, description, controllers and optionally SLAM, Nav2, RViz.
+
+This file only composes the component launch files. Their own arguments (world, headless,
+x, y, yaw, mode, map, ...) are forwarded automatically when given on the command line;
+`ros2 launch bicycle_bringup sim_bringup.launch.py --show-args` lists all of them.
+"""
 
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    ExecuteProcess,
-    IncludeLaunchDescription,
-    RegisterEventHandler,
-)
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch.event_handlers import OnProcessExit
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
+from launch.substitutions import IfElseSubstitution, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
-import xacro
 
-pkg_name = "self_driving_bicycle"
-pkg_share_directory = get_package_share_directory(pkg_name)
+def include(package, launch_file, condition=None, **arguments):
+    """Include `<package>/launch/<launch_file>` with the given launch arguments."""
+    return IncludeLaunchDescription(
+        PathJoinSubstitution([FindPackageShare(package), 'launch', launch_file]),
+        launch_arguments=arguments.items(),
+        condition=condition,
+    )
 
 
 def generate_launch_description():
+    slam = LaunchConfiguration('slam')
+    nav = LaunchConfiguration('nav')
+    controllers_file = PathJoinSubstitution(
+        [FindPackageShare('bicycle_control'), 'config', 'bicycle_controller.yaml'])
+    rviz_config = PathJoinSubstitution([
+        FindPackageShare('bicycle_bringup'), 'rviz',
+        IfElseSubstitution(nav, 'navigation.rviz', 'slam.rviz'),
+    ])
 
-    slam_params_file = LaunchConfiguration("slam_params_file")
-    use_sim_time = LaunchConfiguration("use_sim_time")
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'slam', default_value='true', choices=['true', 'false'],
+            description='Run slam_toolbox (see `mode`); required by Nav2 for map->odom.'),
+        DeclareLaunchArgument(
+            'nav', default_value='false', choices=['true', 'false'],
+            description='Run the Nav2 navigation servers.'),
+        DeclareLaunchArgument(
+            'rviz', default_value='true', choices=['true', 'false'],
+            description='Start RViz.'),
 
-    slam_params_file_arg = DeclareLaunchArgument(
-        "slam_params_file",
-        default_value=os.path.join(
-            pkg_share_directory, "config", "mapper_params_online_async.yaml"
+        include('bicycle_description', 'description.launch.py',
+                use_sim_time='true', use_sim='true', controllers_file=controllers_file),
+        include('bicycle_gazebo', 'sim.launch.py'),
+        include('bicycle_control', 'control.launch.py', use_sim_time='true'),
+        include('bicycle_navigation', 'slam.launch.py', IfCondition(slam), use_sim_time='true'),
+        include('bicycle_navigation', 'navigation.launch.py', IfCondition(nav),
+                use_sim_time='true'),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            arguments=['-d', rviz_config],
+            parameters=[{'use_sim_time': True}],
+            condition=IfCondition(LaunchConfiguration('rviz')),
         ),
-        description="Full path to the ROS2 parameters file to use for the slam_toolbox node",
-    )
-
-    use_sim_time_arg = DeclareLaunchArgument(
-        "use_sim_time", default_value="true", description="Use simulation/Gazebo clock"
-    )
-
-    pkg_path = os.path.join(pkg_share_directory)
-    xacro_file = os.path.join(pkg_path, "urdf", "bicycle_drive.xacro.urdf")
-    robot_description_raw = xacro.process_file(xacro_file).toxml()
-    params = {"robot_description": robot_description_raw, "use_sim_time": True}
-
-    node_robot_state_publisher = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        name="robot_state_publisher",
-        output="screen",
-        parameters=[params],
-    )
-
-    node_joint_state_publisher_gui = Node(
-        package="joint_state_publisher_gui",
-        executable="joint_state_publisher_gui",
-        name="joint_state_publisher_gui",
-        arguments=[xacro_file],
-    )
-
-    rviz_config = os.path.join(pkg_path, "config", "config.rviz")
-    rviz = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        arguments=["-d", rviz_config],
-        output="screen",
-    )
-
-    gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                os.path.join(
-                    get_package_share_directory("gazebo_ros"),
-                    "launch",
-                    "gazebo.launch.py",
-                ),
-            ]
-        ),
-    )
-
-    spawn_entity = Node(
-        package="gazebo_ros",
-        executable="spawn_entity.py",
-        arguments=["-topic", "robot_description", "-entity", "bicycle"],
-        output="screen",
-    )
-
-    load_joint_state_broadcaster = ExecuteProcess(
-        cmd=[
-            "ros2",
-            "control",
-            "load_controller",
-            "--set-state",
-            "active",
-            "joint_state_broadcaster",
-        ],
-        output="screen",
-    )
-
-    load_bicycle_controller = ExecuteProcess(
-        cmd=[
-            "ros2",
-            "control",
-            "load_controller",
-            "--set-state",
-            "active",
-            "bicycle_controller",
-        ],
-        output="screen",
-    )
-
-    static_transform_base_link = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        arguments=[
-            "--x",
-            "0",
-            "--y",
-            "0",
-            "--z",
-            "0",
-            "--yaw",
-            "0",
-            "--pitch",
-            "0",
-            "--roll",
-            "0",
-            "--frame-id",
-            "odom",
-            "--child-frame-id",
-            "base_link",
-        ],
-    )
-
-    slam_node = Node(
-        parameters=[slam_params_file, {"use_sim_time": use_sim_time}],
-        package="slam_toolbox",
-        executable="async_slam_toolbox_node",
-        name="slam_toolbox",
-        output="screen",
-    )
-
-    return LaunchDescription(
-        [
-            rviz,
-            # node_joint_state_publisher_gui,
-            node_robot_state_publisher,
-            # static_transform_base_link,
-            gazebo,
-            spawn_entity,
-            RegisterEventHandler(
-                event_handler=OnProcessExit(
-                    target_action=spawn_entity,
-                    on_exit=[load_joint_state_broadcaster],
-                )
-            ),
-            RegisterEventHandler(
-                event_handler=OnProcessExit(
-                    target_action=load_joint_state_broadcaster,
-                    on_exit=[load_bicycle_controller],
-                )
-            ),
-            use_sim_time_arg,
-            slam_params_file_arg,
-            slam_node,
-        ]
-    )
+    ])

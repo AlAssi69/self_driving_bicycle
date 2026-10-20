@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Keyboard teleoperation of the simulated bicycle.
+#
+# Publishes sim-time-stamped TwistStamped on /cmd_vel_teleop (twist_mux priority 100).
+# Defaults keep speed and turn rate within the bicycle's limits (0.4 m/s, ~1 m radius).
+# Extra ROS arguments are appended, e.g.:
+#   ros2 run bicycle_bringup teleop_keyboard --ros-args -p speed:=0.2
+set -euo pipefail
+
+exec ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args \
+  -p stamped:=true \
+  -p use_sim_time:=true \
+  -p speed:=0.4 \
+  -p turn:=0.4 \
+  -r cmd_vel:=cmd_vel_teleop \
+  "$@"

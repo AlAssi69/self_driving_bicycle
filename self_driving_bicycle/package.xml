@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>self_driving_bicycle</name>
+  <version>2.0.0</version>
+  <description>
+    Metapackage of the self-driving bicycle simulation: robot description, Gazebo
+    simulation, ros2_control, SLAM, Nav2 and bringup.
+  </description>
+  <maintainer email="smart.teen.12345@gmail.com">Ashraf AlAssi</maintainer>
+  <license>Apache-2.0</license>
+  <url type="repository">https://github.com/AlAssi69/self_driving_bicycle</url>
+  <author>Ashraf AlAssi</author>
+  <author>Mhd. Osama Keakaty</author>
+  <author>Sarah AlAhmad</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>bicycle_bringup</exec_depend>
+  <exec_depend>bicycle_control</exec_depend>
+  <exec_depend>bicycle_description</exec_depend>
+  <exec_depend>bicycle_gazebo</exec_depend>
+  <exec_depend>bicycle_navigation</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

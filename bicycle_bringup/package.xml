@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>bicycle_bringup</name>
+  <version>2.0.0</version>
+  <description>
+    Top-level launch files, RViz configurations and teleoperation for the simulated
+    self-driving bicycle, plus the cross-package consistency and integration tests.
+  </description>
+  <maintainer email="smart.teen.12345@gmail.com">Ashraf AlAssi</maintainer>
+  <license>Apache-2.0</license>
+  <url type="repository">https://github.com/AlAssi69/self_driving_bicycle</url>
+  <author>Ashraf AlAssi</author>
+  <author>Mhd. Osama Keakaty</author>
+  <author>Sarah AlAhmad</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>bicycle_control</exec_depend>
+  <exec_depend>bicycle_description</exec_depend>
+  <exec_depend>bicycle_gazebo</exec_depend>
+  <exec_depend>bicycle_navigation</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>teleop_twist_keyboard</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>controller_manager_msgs</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>launch_testing_ros</test_depend>
+  <test_depend>nav_msgs</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>python3-yaml</test_depend>
+  <test_depend>rclpy</test_depend>
+  <test_depend>sensor_msgs</test_depend>
+  <test_depend>std_msgs</test_depend>
+  <test_depend>xacro</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
