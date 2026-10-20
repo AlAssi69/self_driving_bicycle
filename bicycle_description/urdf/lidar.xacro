@@ -1,60 +1,79 @@
 <?xml version="1.0"?>
-<robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <joint name="frame_lidar" type="fixed">
-        <parent link="frame" />
-        <child link="laser_frame" />
-        <origin xyz="0 0 ${wheel_radius+0.01}" rpy="0 0 0" />
-    </joint>
+    <!--
+      2D lidar on a mast. The sensor publishes sensor_msgs/LaserScan on /scan
+      (bridged from Gazebo) in frame laser_frame.
+      parent:  link the mast stands on
+      mount_z: height of the scan plane above the parent link origin [m]
+      config:  the `lidar` block of config/geometry.yaml
+    -->
+    <xacro:macro name="lidar" params="parent mount_z config">
+        <xacro:property name="mast_length" value="${mount_z - config.length/2}" />
 
-    <link name="laser_frame">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder length="0.01" radius="0.07" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <geometry>
-                <cylinder length="0.01" radius="0.07" />
-            </geometry>
-        </collision>
-        <xacro:inertial_cylinder mass="0.5" length="0.01" radius="0.07">
-            <origin xyz="0 0 0" rpy="0 0 0" />
-        </xacro:inertial_cylinder>
-    </link>
+        <joint name="laser_joint" type="fixed">
+            <parent link="${parent}" />
+            <child link="laser_frame" />
+            <origin xyz="0 0 ${mount_z}" rpy="0 0 0" />
+        </joint>
 
-    <gazebo reference="laser_frame">
-        <sensor name="laser" type="ray">
-            <pose>0 0 0 0 0 0</pose>
-            <visualize>true</visualize>
-            <update_rate>9</update_rate>
-            <ray>
-                <scan>
-                    <horizontal>
-                        <samples>360</samples>
-                        <resoluation>1</resoluation>
-                        <min_angle>-3.14</min_angle>
-                        <max_angle>3.14</max_angle>
-                    </horizontal>
-                </scan>
-                <range>
-                    <min>0.12</min>
-                    <max>10.0</max>
-                    <resoluation>0.01</resoluation>
-                </range>
-            </ray>
-            <plugin name="laser_controller" filename="libgazebo_ros_ray_sensor.so">
-                <ros>
-                    <argument>--ros-args --remap ~/out:=scan</argument>
-                </ros>
-                <output_type>sensor_msgs/LaserScan</output_type>
-                <frame_name>laser_frame</frame_name>
-            </plugin>
-        </sensor>
+        <link name="laser_frame">
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder length="${config.length}" radius="${config.radius}" />
+                </geometry>
+                <material name="black" />
+            </visual>
+            <visual>
+                <origin xyz="0 0 ${-(mount_z + config.length/2)/2}" rpy="0 0 0" />
+                <geometry>
+                    <cylinder length="${mast_length}" radius="${config.mast_radius}" />
+                </geometry>
+                <material name="black" />
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder length="${config.length}" radius="${config.radius}" />
+                </geometry>
+            </collision>
+            <xacro:inertial_cylinder mass="${config.mass}" length="${config.length}"
+                radius="${config.radius}">
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </xacro:inertial_cylinder>
+        </link>
 
-        <material>Gazebo/Black</material>
-    </gazebo>
+        <gazebo reference="laser_frame">
+            <sensor name="lidar" type="gpu_lidar">
+                <topic>scan</topic>
+                <gz_frame_id>laser_frame</gz_frame_id>
+                <always_on>true</always_on>
+                <visualize>true</visualize>
+                <update_rate>${config.update_rate}</update_rate>
+                <lidar>
+                    <scan>
+                        <horizontal>
+                            <samples>${config.samples}</samples>
+                            <resolution>1</resolution>
+                            <!-- Full circle without a duplicated first/last beam. -->
+                            <min_angle>${-pi}</min_angle>
+                            <max_angle>${pi - 2*pi/config.samples}</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>${config.min_range}</min>
+                        <max>${config.max_range}</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.01</stddev>
+                    </noise>
+                </lidar>
+            </sensor>
+        </gazebo>
+    </xacro:macro>
 
 </robot>

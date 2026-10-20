@@ -1,16 +1,40 @@
-<?xml version="1.0"?>
-<robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+# Single source of truth for the bicycle's physical parameters (SI units).
+#
+# Read by urdf/bicycle.urdf.xacro through xacro.load_yaml(). A few values have to be
+# repeated in other packages' YAML files (controller, Nav2) because those are plain
+# ROS parameter files; bicycle_bringup/test/test_consistency.py checks every copy
+# against this file.
 
-    <xacro:property name="box_length" value="0.01" />
-    <xacro:property name="box_mass" value="0.005" />
+wheelbase: 0.98            # rear axle -> front axle [m]
 
-    <xacro:property name="wheel_radius" value="0.25" />
-    <xacro:property name="wheel_thickness" value="0.2" />
-    <xacro:property name="wheel_separation" value="0.98" />
-    <xacro:property name="wheel_mass" value="1.0" />
+wheel:
+  radius: 0.25             # [m]
+  width: 0.20              # wide wheels keep the bicycle statically upright [m]
+  mass: 1.0                # [kg]
+  friction: 1.0            # Coulomb friction coefficient (both directions)
 
-    <xacro:property name="frame_mass" value="1.5" />
+chassis:
+  tube_radius: 0.01        # frame tube between the axles [m]
+  mass: 1.5                # [kg]
 
-    <xacro:property name="cylindar_radius" value="0.01" />
+steering:
+  fork_size: 0.05          # edge of the cubic steering fork [m]
+  fork_mass: 0.2           # [kg]
+  max_angle: 0.7854        # |steering angle| limit [rad] (45 deg)
+  max_velocity: 2.0        # [rad/s]
+  max_effort: 10.0         # [N m]
 
-</robot>
+traction:
+  max_velocity: 2.0        # rear wheel speed limit [rad/s] (= 0.5 m/s)
+  max_effort: 10.0         # [N m]
+
+lidar:
+  radius: 0.05             # sensor puck [m]
+  length: 0.04             # sensor puck [m]
+  mass: 0.2                # sensor + mast [kg]
+  mast_radius: 0.01        # [m]
+  scan_height: 0.65        # scan plane above the ground; must clear the wheel tops [m]
+  update_rate: 10.0        # [Hz]
+  samples: 360
+  min_range: 0.12          # [m]
+  max_range: 10.0          # [m]

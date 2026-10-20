@@ -1,155 +1,138 @@
 <?xml version="1.0"?>
-<robot name="bicycle_drive" xmlns:xacro="http://ros.org/wiki/xacro">
+<!--
+  Self-driving bicycle. Frames follow REP-103/REP-105 (x forward, y left, z up).
 
-    <!-- XACRO INCLUDE -->
-    <xacro:include filename="materials.xacro" />
-    <xacro:include filename="properties.xacro" />
+  base_footprint is the ground point under the rear axle: the reference point of the
+  bicycle kinematic model and of the bicycle_steering_controller odometry.
+  All dimensions come from config/geometry.yaml.
+
+  Arguments:
+    use_sim           "true" adds the Gazebo (gz_ros2_control) system plugin
+    hardware_plugin   ros2_control system plugin; empty selects GazeboSimSystem when
+                      use_sim is true, otherwise mock_components/GenericSystem
+    controllers_file  controller parameter file loaded by gz_ros2_control (use_sim only)
+-->
+<robot name="bicycle" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:arg name="use_sim" default="false" />
+    <xacro:arg name="hardware_plugin" default="" />
+    <xacro:arg name="controllers_file" default="" />
+
     <xacro:include filename="inertial.xacro" />
+    <xacro:include filename="materials.xacro" />
+    <xacro:include filename="wheel.xacro" />
     <xacro:include filename="lidar.xacro" />
+    <xacro:include filename="ros2_control.xacro" />
 
-    <!-- BASE LINK -->
-    <link name="base_link" />
+    <xacro:property name="use_sim" value="${'$(arg use_sim)'.lower() in ('true', '1')}" />
+    <xacro:property name="geometry"
+        value="${xacro.load_yaml('$(find bicycle_description)/config/geometry.yaml')}" />
+    <xacro:property name="wheelbase" value="${geometry.wheelbase}" />
+    <xacro:property name="wheel" value="${geometry.wheel}" />
+    <xacro:property name="chassis" value="${geometry.chassis}" />
+    <xacro:property name="steering" value="${geometry.steering}" />
+    <xacro:property name="traction" value="${geometry.traction}" />
 
-    <!-- BASE FOOTPRINT LINK -->
-    <joint name="base_footprint_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="base_footprint" />
-        <origin xyz="0 0 0" rpy="0 0 0" />
-    </joint>
-
+    <!-- BASE -->
     <link name="base_footprint" />
 
-    <!-- FRAME LINK -->
-    <joint name="base_frame_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="frame" />
-        <origin xyz="0 0 ${wheel_radius}" rpy="0 0 -${pi/2}" />
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint" />
+        <child link="base_link" />
+        <origin xyz="0 0 ${wheel.radius}" rpy="0 0 0" />
     </joint>
 
-    <link name="frame">
+    <!-- Rear axle centre. -->
+    <link name="base_link" />
+
+    <!-- CHASSIS: frame tube between the two axles -->
+    <joint name="chassis_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="chassis" />
+        <origin xyz="${wheelbase/2} 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="chassis">
         <visual>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+            <origin xyz="0 0 0" rpy="0 ${pi/2} 0" />
             <geometry>
-                <cylinder length="${wheel_separation}" radius="${cylindar_radius}" />
+                <cylinder length="${wheelbase}" radius="${chassis.tube_radius}" />
             </geometry>
             <material name="cyan" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+            <origin xyz="0 0 0" rpy="0 ${pi/2} 0" />
             <geometry>
-                <cylinder length="${wheel_separation}" radius="${cylindar_radius}" />
+                <cylinder length="${wheelbase}" radius="${chassis.tube_radius}" />
             </geometry>
         </collision>
-        <xacro:inertial_cylinder mass="${frame_mass}" length="${wheel_separation}"
-            radius="${cylindar_radius}">
-            <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
+        <xacro:inertial_cylinder mass="${chassis.mass}" length="${wheelbase}"
+            radius="${chassis.tube_radius}">
+            <origin xyz="0 0 0" rpy="0 ${pi/2} 0" />
         </xacro:inertial_cylinder>
     </link>
 
-    <gazebo reference="frame">
-        <material>Gazebo/Turquoise</material>
-    </gazebo>
+    <!-- REAR (TRACTION) WHEEL -->
+    <joint name="traction_joint" type="continuous">
+        <parent link="base_link" />
+        <child link="rear_wheel" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
+        <limit effort="${traction.max_effort}" velocity="${traction.max_velocity}" />
+    </joint>
 
-    <!-- STEERING LINK -->
-    <joint name="steering_joint" type="continuous">
-        <axis xyz="0 0 1" />
-        <parent link="frame" />
+    <xacro:wheel_link name="rear_wheel" config="${wheel}" />
+
+    <!-- STEERING FORK at the front axle -->
+    <joint name="steering_joint" type="revolute">
+        <parent link="base_link" />
         <child link="steering_link" />
-        <origin xyz="0 ${wheel_separation/2} 0" rpy="0 0 0" />
+        <origin xyz="${wheelbase} 0 0" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+        <limit lower="${-steering.max_angle}" upper="${steering.max_angle}"
+            effort="${steering.max_effort}" velocity="${steering.max_velocity}" />
     </joint>
 
     <link name="steering_link">
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="${box_length} ${box_length} ${box_length}" />
+                <box size="${steering.fork_size} ${steering.fork_size} ${steering.fork_size}" />
             </geometry>
             <material name="white" />
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="${box_length} ${box_length} ${box_length}" />
+                <box size="${steering.fork_size} ${steering.fork_size} ${steering.fork_size}" />
             </geometry>
         </collision>
-        <xacro:inertial_box mass="${box_mass}"
-            x="${box_length}" y="${box_length}" z="${box_length}">
+        <xacro:inertial_box mass="${steering.fork_mass}"
+            x="${steering.fork_size}" y="${steering.fork_size}" z="${steering.fork_size}">
             <origin xyz="0 0 0" rpy="0 0 0" />
         </xacro:inertial_box>
     </link>
 
-    <gazebo reference="steering_link">
-        <material>Gazebo/White</material>
-    </gazebo>
-
-    <!-- FRONT WHEEL -->
-    <joint name="front_traction_joint" type="continuous">
-        <mimic joint="traction_joint" />
-        <axis xyz="0 0 1" />
+    <!-- FRONT WHEEL (passive) -->
+    <joint name="front_wheel_joint" type="continuous">
         <parent link="steering_link" />
         <child link="front_wheel" />
-        <origin xyz="0 0 0" rpy="0 ${-pi/2} 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz="0 1 0" />
     </joint>
 
-    <link name="front_wheel">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
-            </geometry>
-        </collision>
-        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
-            radius="${wheel_radius}">
-            <origin xyz="0 0 0" rpy="0 0 0" />
-        </xacro:inertial_cylinder>
-    </link>
+    <xacro:wheel_link name="front_wheel" config="${wheel}" />
 
-    <gazebo reference="front_wheel">
-        <material>Gazebo/Black</material>
-        <mu1 value="0.5" />
-        <mu2 value="0.5" />
-    </gazebo>
+    <!-- SENSORS -->
+    <xacro:lidar parent="chassis" mount_z="${geometry.lidar.scan_height - wheel.radius}"
+        config="${geometry.lidar}" />
 
-    <!-- BACK OR TRACTION WHEEL -->
-    <joint name="traction_joint" type="continuous">
-        <axis xyz="0 0 1" />
-        <parent link="frame" />
-        <child link="back_wheel" />
-        <origin xyz="0 ${-wheel_separation/2} 0" rpy="0 ${-pi/2} 0" />
-    </joint>
+    <!-- ROS2 CONTROL -->
+    <xacro:property name="default_hardware_plugin"
+        value="${'gz_ros2_control/GazeboSimSystem' if use_sim else 'mock_components/GenericSystem'}" />
+    <xacro:bicycle_ros2_control
+        hardware_plugin="${'$(arg hardware_plugin)' or default_hardware_plugin}"
+        use_sim="${use_sim}"
+        controllers_file="$(arg controllers_file)" />
 
-    <link name="back_wheel">
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder length="${wheel_thickness}" radius="${wheel_radius}" />
-            </geometry>
-        </collision>
-        <xacro:inertial_cylinder mass="${wheel_mass}" length="${wheel_thickness}"
-            radius="${wheel_radius}">
-            <origin xyz="0 0 0" rpy="0 0 0" />
-        </xacro:inertial_cylinder>
-    </link>
-
-    <gazebo reference="back_wheel">
-        <material>Gazebo/Black</material>
-        <!-- <mu1 value="0.5" /> -->
-        <!-- <mu2 value="0.5" /> -->
-    </gazebo>
-
-    <xacro:include filename="ros2_control.xacro" />
 </robot>
