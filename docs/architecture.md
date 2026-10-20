@@ -8,17 +8,24 @@ Each package owns one concern and depends only on what it uses. Dependencies poi
 graph LR
   description[bicycle_description<br/>URDF, geometry.yaml]
   gazebo[bicycle_gazebo<br/>worlds, models, bridge]
+  hardware[bicycle_hardware<br/>Arduino plugin, firmware, lidar]
   control[bicycle_control<br/>controllers, twist_mux]
   navigation[bicycle_navigation<br/>slam_toolbox, Nav2]
   bringup[bicycle_bringup<br/>composition, RViz, tests]
-  bringup --> description & gazebo & control & navigation
+  bringup --> description & gazebo & hardware & control & navigation
+  hardware --> control
 ```
 
-- `bicycle_description` knows nothing about Gazebo or Nav2. The ros2_control hardware
-  plugin is a xacro argument (`hardware_plugin`), so the hardware package can reuse the
-  description with its own system plugin.
-- `bicycle_control` knows nothing about Gazebo: the controller_manager is provided by the
-  hardware layer (gz_ros2_control in simulation, ros2_control_node on the robot).
+- `bicycle_description` knows nothing about Gazebo, the hardware or Nav2. The ros2_control
+  hardware plugin and its parameters are xacro arguments (`hardware_plugin`,
+  `hardware_params_file`), so the simulation, mock hardware and the real robot share one
+  description.
+- `bicycle_gazebo` and `bicycle_hardware` are interchangeable hardware layers: each provides
+  the controller_manager and `/scan`. In simulation that is gz_ros2_control and the
+  ros_gz bridge; on the robot, `ros2_control_node` hosting the Arduino plugin and the
+  YDLIDAR driver.
+- `bicycle_control` knows nothing about either: the same controllers and `twist_mux`
+  configuration drive both.
 - `bicycle_navigation` only relies on the topic and frame contract below.
 - `bicycle_bringup` only composes; it also holds the tests that span packages.
 
@@ -32,8 +39,22 @@ graph TD
   bringup --> ctl[bicycle_control/control.launch.py<br/>spawners, twist_mux]
   bringup -- slam:=true --> slam[bicycle_navigation/slam.launch.py<br/>slam_toolbox mapping or localization]
   bringup -- nav:=true --> nav[bicycle_navigation/navigation.launch.py<br/>Nav2 servers]
-  bringup -- rviz:=true --> rviz[rviz2]
+  bringup -- rviz:=true --> rviz[bicycle_bringup/rviz.launch.py]
 ```
+
+On the real robot, `robot_bringup.launch.py` replaces only the hardware layer:
+
+```mermaid
+graph TD
+  robot[bicycle_bringup/robot_bringup.launch.py]
+  robot --> desc[bicycle_description/description.launch.py<br/>hardware_plugin:=bicycle_hardware/BicycleSystemHardware]
+  robot --> hw[bicycle_hardware/hardware.launch.py<br/>ros2_control_node, ydlidar_ros2_driver]
+  robot --> ctl[bicycle_control/control.launch.py<br/>spawners, twist_mux]
+  robot -- slam:=true --> slam[bicycle_navigation/slam.launch.py]
+  robot -- nav:=true --> nav[bicycle_navigation/navigation.launch.py]
+```
+
+RViz runs on a development machine (`rviz.launch.py`); the robot runs headless.
 
 Every component launch file also runs on its own. Arguments given on the command line reach
 the included files (`--show-args` lists them all).
@@ -47,6 +68,11 @@ Start-up sequence in simulation:
 4. The spawners activate `joint_state_broadcaster` and `bicycle_controller`.
 5. slam_toolbox (a lifecycle node, auto-activated) starts publishing `map -> odom`.
 6. Nav2's lifecycle manager configures and activates the servers once TF is available.
+
+On the robot, steps 2–3 become: `ros2_control_node` reads `/robot_description`, loads the
+`bicycle_hardware` plugin with the parameters from `bicycle_hardware/config/hardware.yaml`,
+opens the Arduino's serial port (which resets the Uno; the plugin waits for its bootloader),
+checks the firmware version and sends the steering limits.
 
 ## TF tree
 
@@ -70,9 +96,9 @@ bicycle kinematic model, of the controller's odometry and of Nav2's footprint an
 
 | Name | Type | Producer → consumer |
 |---|---|---|
-| `/clock` | `rosgraph_msgs/Clock` | ros_gz_bridge → every node (sim time) |
+| `/clock` | `rosgraph_msgs/Clock` | ros_gz_bridge → every node (simulation only) |
 | `/robot_description` | `std_msgs/String` | robot_state_publisher → Gazebo spawn, controller_manager, RViz |
-| `/scan` (frame `laser_frame`) | `sensor_msgs/LaserScan` | ros_gz_bridge → slam_toolbox, costmaps, collision_monitor |
+| `/scan` (frame `laser_frame`) | `sensor_msgs/LaserScan` | ros_gz_bridge or ydlidar_ros2_driver → slam_toolbox, costmaps, collision_monitor |
 | `/joint_states` | `sensor_msgs/JointState` | joint_state_broadcaster → robot_state_publisher |
 | `/odom`, TF `odom → base_footprint` | `nav_msgs/Odometry` | bicycle_controller → Nav2 |
 | `/map`, TF `map → odom` | `nav_msgs/OccupancyGrid` | slam_toolbox → Nav2, RViz |
@@ -94,14 +120,36 @@ graph LR
   teleop[teleop_keyboard] -- cmd_vel_teleop --> mux
   estop[/e_stop/] -. lock .-> mux
   mux -- /bicycle_controller/reference --> bc[bicycle_controller]
-  bc -- steering position,<br/>rear wheel velocity --> hw[gz_ros2_control]
+  bc -- steering position,<br/>rear wheel velocity --> hw[gz_ros2_control<br/>or bicycle_hardware]
 ```
 
 - All messages are `TwistStamped` (the Jazzy controllers no longer accept `Twist`).
 - The controller stops when no command arrives for `reference_timeout` (0.5 s). Command
   stamps must use the same clock as the controller (sim time in simulation), which is why
-  the teleop wrapper sets `use_sim_time`.
+  the teleop wrapper sets `use_sim_time` (`teleop_keyboard --real` on the robot).
 - The e-stop lock mutes every source until `false` is published.
+- On the robot, two more safety layers follow: the plugin stops the drive whenever it is
+  deactivated or loses the serial link, and the firmware stops the motor when no command
+  arrives for 300 ms.
+
+## Real robot
+
+```mermaid
+graph LR
+  bc[bicycle_controller] -- steering angle,<br/>wheel speed --> plugin[bicycle_hardware plugin<br/>units, PWM law, limits]
+  plugin -- "C pwm steps" --> fw[Arduino Uno<br/>firmware/bicycle_uno]
+  plugin -- "Q seq" --> fw
+  fw -- "S seq counts period steps flags" --> plugin
+  fw --> motor[BTS7960 + DC motor]
+  fw --> stepper[stepper driver + steering stepper]
+  ir[IR wheel encoder] --> fw
+  plugin -- joint states --> jsb[joint_state_broadcaster]
+```
+
+The firmware only does I/O and safety (watchdog, hard limits); units, calibration and the
+drive's speed law live in the plugin, so tuning needs no reflashing.
+[hardware.md](hardware.md) covers wiring, flashing and calibration;
+[hardware_protocol.md](hardware_protocol.md) the serial protocol.
 
 ## Simulation model notes
 
@@ -112,4 +160,5 @@ graph LR
 - The wide wheels scrub when steering, so the real turning radius is slightly larger than
   the kinematic one. Wheel odometry drifts in turns as a result; SLAM corrects it.
 - The lidar sits on a mast at the chassis centre, 0.65 m above the ground, so the scan plane
-  clears the wheels (0.50 m tall) and does not see the robot itself.
+  clears the wheels (0.50 m tall) and does not see the robot itself. It models the real
+  YDLIDAR X4 Pro: 0.10–12 m, 10 Hz, 500 samples per revolution.

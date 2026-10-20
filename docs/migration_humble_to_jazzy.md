@@ -9,6 +9,7 @@ affected Humble. This page lists every change and why it was made.
 | v1.0.0 | v2.0.0 |
 |---|---|
 | one package `self_driving_bicycle` | `bicycle_description`, `bicycle_gazebo`, `bicycle_control`, `bicycle_navigation`, `bicycle_bringup` + metapackage |
+| separate repository `self_driving_bicycle_hw` | `bicycle_hardware` (see [Hardware](#hardware-self_driving_bicycle_hw--bicycle_hardware)) |
 | `launch/bicycle_drive.launch.py` (everything) | one launch file per concern, composed by `bicycle_bringup/launch/sim_bringup.launch.py` |
 | `launch/navigation_launch.py` (copy of Humble nav2_bringup) | `bicycle_navigation/launch/navigation.launch.py` (only the servers used) |
 | `urdf/properties.xacro` | `bicycle_description/config/geometry.yaml` |
@@ -73,6 +74,25 @@ affected Humble. This page lists every change and why it was made.
 | `use_sim_time: True` in every block | set by the launch file only | YAML values override the launch value |
 | AMCL and map_server sections (unused) | removed | slam_toolbox localizes |
 | — | collision_monitor | safety layer before twist_mux |
+
+## Hardware (`self_driving_bicycle_hw` → `bicycle_hardware`)
+
+The hardware repository was merged into this one (history kept; its last state is tagged
+`hw-v1.0.0-humble`). It could not drive the bicycle:
+
+| v1.0.0 | v2.0.0 | Why |
+|---|---|---|
+| own copy of the URDF (+Y layout, `base_footprint` under `base_link`, `<mimic>`) and controller YAML (Humble keys, 1 kHz) | `bicycle_description` with `hardware_plugin`/`hardware_params_file`, `bicycle_control`'s configuration | one model and one controller configuration for simulation and robot |
+| hardware parameters hardcoded in the URDF (`/dev/ttyACM0`) | `config/hardware.yaml`, `device:=` | calibration without editing the model |
+| `on_init(HardwareInfo)`, `export_*_interfaces()` | `on_init(HardwareComponentInterfaceParams)`, automatic interfaces | deprecated in Jazzy |
+| `std::stoi` on parameters, uncaught `Open()` exception | validated configuration, errors reported | a typo or a missing device killed the controller manager |
+| wheel position overwritten with `counts * 0.2` | `counts * 2 pi / 8` rad | odometry was about 3.9x too short |
+| steering joint read as a wheel encoder, never commanded | stepper steps ↔ radians, both ways | the bicycle could only go straight |
+| blocking reads of up to 3 s, reconnect inside the control loop, 1 kHz | one non-blocking round trip per 100 Hz cycle, `ERROR` after N failures | the control loop stalled |
+| drive kept running on deactivate or error | stopped on every lifecycle exit, firmware watchdog | safety |
+| firmware: `Serial.readString()` (1 s per request), heap leak and null-pointer read in `split()`, forward-only PWM 35, no steering | non-blocking parser, no heap, signed PWM, AccelStepper steering, watchdog, hard limits, versioned protocol | see [hardware_protocol.md](hardware_protocol.md) |
+| libserial (undeclared) | POSIX termios | no extra dependency |
+| no package dependencies, no tests | full dependencies; unit, plugin, fake-Arduino integration and consistency tests; the firmware compiled in CI | `rosdep install` works, regressions are caught |
 
 ## Repository
 

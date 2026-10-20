@@ -29,6 +29,13 @@ The integration test uses its own partition for this reason.
   (`headless:=true`) and watch in RViz. The lidar still works headless
   (`--headless-rendering`).
 - **Gazebo topics not visible between terminals**: set `export GZ_IP=127.0.0.1`.
+- **ROS topics do not arrive between processes** (the controller manager keeps waiting for
+  `robot_description`, spawners time out on `list_controllers`, a `listener` hears no
+  `talker`), seen on a WSL machine with a VPN-style `/32` interface and Docker bridges: Fast
+  DDS's default transport mix drops data between processes there, while either transport
+  alone works. Restrict it in every terminal:
+  `export FASTDDS_BUILTIN_TRANSPORTS=SHM` (single machine) or `=UDPv4` (robot and a
+  development machine). Check with `ros2 run demo_nodes_cpp talker` and `listener`.
 
 ## Controllers do not start
 
@@ -49,6 +56,25 @@ The integration test uses its own partition for this reason.
   `ros2 topic pub -r 5 /e_stop std_msgs/msg/Bool "{data: false}"` (stop it after a second).
 - `ros2 topic pub --once` can exit before the message is delivered; for the e-stop use a
   continuous publisher (`-r 5`) as above.
+
+## Real robot
+
+- **`Cannot open the Arduino serial port`**: check `ls -l /dev/bicycle_arduino` (udev rule
+  installed?) and that your user is in `dialout` (`groups`); in WSL attach the device with
+  usbipd and pass `device:=/dev/ttyACM0` ([hardware.md](hardware.md#developing-in-wsl)).
+- **`No answer from the Arduino ... is firmware/bicycle_uno flashed?`**: the firmware is
+  missing, another program (a serial monitor) holds the port, or the baud rate differs from
+  `protocol.hpp`. Try `V` in a serial monitor at 115200 baud.
+- **`Firmware '...' version ... expected`**: the Arduino runs an older firmware; flash the
+  one from this checkout.
+- **`The firmware watchdog stopped the drive`**: commands arrive more than 300 ms apart; the
+  computer is overloaded or the USB link drops data.
+- **`Serial link to the Arduino lost`**: the controllers stop and the hardware goes to
+  `unconfigured`. Reconnect, then restart the launch (or reconfigure the component with
+  `ros2 control set_hardware_component_state BicycleSystem active`).
+- **`package 'ydlidar_ros2_driver' not found`**: import and build `robot.repos`
+  ([hardware.md](hardware.md#install-on-the-robots-computer)), or start without the lidar
+  (`lidar:=false`).
 
 ## SLAM
 
