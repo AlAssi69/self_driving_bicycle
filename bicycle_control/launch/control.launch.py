@@ -34,8 +34,10 @@ def spawner(controller, *extra_arguments):
         output='screen',
         arguments=[
             controller,
-            '--controller-manager', '/controller_manager',
-            '--controller-manager-timeout', LaunchConfiguration('controller_manager_timeout'),
+            '--controller-manager',
+            '/controller_manager',
+            '--controller-manager-timeout',
+            LaunchConfiguration('controller_manager_timeout'),
             *extra_arguments,
         ],
     )
@@ -44,30 +46,38 @@ def spawner(controller, *extra_arguments):
 def generate_launch_description():
     config = PathJoinSubstitution([FindPackageShare('bicycle_control'), 'config'])
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use the simulation (/clock) time source.'),
-        DeclareLaunchArgument(
-            'controller_manager_timeout', default_value='120',
-            description='Seconds to wait for the controller_manager (Gazebo can start slowly).'),
-        spawner('joint_state_broadcaster'),
-        # The steering controllers publish odometry under their own namespace;
-        # expose it on the standard topics.
-        spawner(
-            'bicycle_controller',
-            '--controller-ros-args', '-r /bicycle_controller/tf_odometry:=/tf',
-            '--controller-ros-args', '-r /bicycle_controller/odometry:=/odom',
-        ),
-        Node(
-            package='twist_mux',
-            executable='twist_mux',
-            output='screen',
-            parameters=[
-                PathJoinSubstitution([config, 'twist_mux_topics.yaml']),
-                PathJoinSubstitution([config, 'twist_mux_locks.yaml']),
-                {'use_sim_time': LaunchConfiguration('use_sim_time'), 'use_stamped': True},
-            ],
-            remappings=[('cmd_vel_out', '/bicycle_controller/reference')],
-        ),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'use_sim_time',
+                default_value='false',
+                description='Use the simulation (/clock) time source.',
+            ),
+            DeclareLaunchArgument(
+                'controller_manager_timeout',
+                default_value='120',
+                description='Seconds to wait for the controller_manager (Gazebo starts slowly).',
+            ),
+            spawner('joint_state_broadcaster'),
+            # The steering controllers publish odometry under their own namespace;
+            # expose it on the standard topics.
+            spawner(
+                'bicycle_controller',
+                '--controller-ros-args',
+                '-r /bicycle_controller/tf_odometry:=/tf',
+                '--controller-ros-args',
+                '-r /bicycle_controller/odometry:=/odom',
+            ),
+            Node(
+                package='twist_mux',
+                executable='twist_mux',
+                output='screen',
+                parameters=[
+                    PathJoinSubstitution([config, 'twist_mux_topics.yaml']),
+                    PathJoinSubstitution([config, 'twist_mux_locks.yaml']),
+                    {'use_sim_time': LaunchConfiguration('use_sim_time'), 'use_stamped': True},
+                ],
+                remappings=[('cmd_vel_out', '/bicycle_controller/reference')],
+            ),
+        ]
+    )

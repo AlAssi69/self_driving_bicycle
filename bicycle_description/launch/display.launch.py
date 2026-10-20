@@ -24,15 +24,19 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     share = FindPackageShare('bicycle_description')
 
-    return LaunchDescription([
-        IncludeLaunchDescription(PathJoinSubstitution([share, 'launch', 'description.launch.py'])),
-        Node(
-            package='joint_state_publisher_gui',
-            executable='joint_state_publisher_gui',
-        ),
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            arguments=['-d', PathJoinSubstitution([share, 'rviz', 'display.rviz'])],
-        ),
-    ])
+    return LaunchDescription(
+        [
+            IncludeLaunchDescription(
+                PathJoinSubstitution([share, 'launch', 'description.launch.py'])
+            ),
+            Node(
+                package='joint_state_publisher_gui',
+                executable='joint_state_publisher_gui',
+            ),
+            Node(
+                package='rviz2',
+                executable='rviz2',
+                arguments=['-d', PathJoinSubstitution([share, 'rviz', 'display.rviz'])],
+            ),
+        ]
+    )

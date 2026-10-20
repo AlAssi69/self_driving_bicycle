@@ -41,14 +41,18 @@ def load(package, *path):
 
 
 GEOMETRY = load('bicycle_description', 'config', 'geometry.yaml')
-CONTROLLER = load('bicycle_control', 'config', 'bicycle_controller.yaml')[
-    'bicycle_controller']['ros__parameters']
+CONTROLLER = load('bicycle_control', 'config', 'bicycle_controller.yaml')['bicycle_controller'][
+    'ros__parameters'
+]
 NAV2 = load('bicycle_navigation', 'config', 'nav2.yaml')
 SLAM = load('bicycle_navigation', 'config', 'slam.yaml')['slam_toolbox']['ros__parameters']
 BRIDGE = load('bicycle_gazebo', 'config', 'gz_bridge.yaml')
-URDF = ET.fromstring(xacro.process_file(
-    share('bicycle_description', 'urdf', 'bicycle.urdf.xacro'),
-    mappings={'use_sim': 'true', 'controllers_file': 'controllers.yaml'}).toxml())
+URDF = ET.fromstring(
+    xacro.process_file(
+        share('bicycle_description', 'urdf', 'bicycle.urdf.xacro'),
+        mappings={'use_sim': 'true', 'controllers_file': 'controllers.yaml'},
+    ).toxml()
+)
 
 WHEELBASE = GEOMETRY['wheelbase']
 WHEEL_RADIUS = GEOMETRY['wheel']['radius']

@@ -47,30 +47,39 @@ COMMAND_PERIOD = 0.05  # [s]
 @pytest.mark.launch_test
 @launch_testing.markers.keep_alive
 def generate_test_description():
-    return launch.LaunchDescription([
-        IncludeLaunchDescription(
-            PathJoinSubstitution(
-                [FindPackageShare('bicycle_bringup'), 'launch', 'sim_bringup.launch.py']),
-            launch_arguments={
-                'headless': 'true', 'slam': 'false', 'nav': 'false', 'rviz': 'false',
-            }.items(),
-        ),
-        launch_testing.actions.ReadyToTest(),
-    ])
+    return launch.LaunchDescription(
+        [
+            IncludeLaunchDescription(
+                PathJoinSubstitution(
+                    [FindPackageShare('bicycle_bringup'), 'launch', 'sim_bringup.launch.py']
+                ),
+                launch_arguments={
+                    'headless': 'true',
+                    'slam': 'false',
+                    'nav': 'false',
+                    'rviz': 'false',
+                }.items(),
+            ),
+            launch_testing.actions.ReadyToTest(),
+        ]
+    )
 
 
 def gazebo_roll_pitch(model='bicycle', world='obstacles_course'):
     """Return the model's roll and pitch [rad] from Gazebo's ground-truth pose topic."""
     text = subprocess.run(
         ['gz', 'topic', '-e', '-n', '1', '-t', f'/world/{world}/pose/info'],
-        capture_output=True, text=True, timeout=20).stdout
+        capture_output=True,
+        text=True,
+        timeout=20,
+    ).stdout
     match = re.search(
-        r'name: "' + model + r'"\s*id: \d+\s*position \{[^}]*\}\s*orientation \{([^}]*)\}', text)
+        r'name: "' + model + r'"\s*id: \d+\s*position \{[^}]*\}\s*orientation \{([^}]*)\}', text
+    )
     assert match, f'{model} not found in /world/{world}/pose/info'
     q = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'w': 1.0}
     q.update({k: float(v) for k, v in re.findall(r'(\w): ([-\d.e]+)', match.group(1))})
-    roll = math.atan2(2 * (q['w'] * q['x'] + q['y'] * q['z']),
-                      1 - 2 * (q['x'] ** 2 + q['y'] ** 2))
+    roll = math.atan2(2 * (q['w'] * q['x'] + q['y'] * q['z']), 1 - 2 * (q['x'] ** 2 + q['y'] ** 2))
     pitch = math.asin(max(-1.0, min(1.0, 2 * (q['w'] * q['y'] - q['z'] * q['x']))))
     return roll, pitch
 
@@ -81,8 +90,10 @@ class TestSimulatedBicycle(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rclpy.init()
-        cls.node = rclpy.create_node('sim_integration_test', parameter_overrides=[
-            Parameter('use_sim_time', Parameter.Type.BOOL, True)])
+        cls.node = rclpy.create_node(
+            'sim_integration_test',
+            parameter_overrides=[Parameter('use_sim_time', Parameter.Type.BOOL, True)],
+        )
         cls.scans = []
         cls.odom = []
         cls.node.create_subscription(LaserScan, '/scan', cls.scans.append, 10)
@@ -124,16 +135,21 @@ class TestSimulatedBicycle(unittest.TestCase):
 
     def test_1_controllers_become_active(self):
         client = self.node.create_client(ListControllers, '/controller_manager/list_controllers')
-        self.assertTrue(client.wait_for_service(timeout_sec=STARTUP_TIMEOUT),
-                        'controller_manager did not start')
+        self.assertTrue(
+            client.wait_for_service(timeout_sec=STARTUP_TIMEOUT),
+            'controller_manager did not start',
+        )
 
         def all_active():
             future = client.call_async(ListControllers.Request())
             rclpy.spin_until_future_complete(self.node, future, timeout_sec=5.0)
-            states = {c.name: c.state for c in future.result().controller} \
-                if future.result() else {}
-            return (states.get('joint_state_broadcaster') == 'active'
-                    and states.get('bicycle_controller') == 'active')
+            states = (
+                {c.name: c.state for c in future.result().controller} if future.result() else {}
+            )
+            return (
+                states.get('joint_state_broadcaster') == 'active'
+                and states.get('bicycle_controller') == 'active'
+            )
 
         self.spin_until(all_active, STARTUP_TIMEOUT, 'controllers did not become active')
 

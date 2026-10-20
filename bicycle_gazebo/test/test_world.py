@@ -47,11 +47,14 @@ def test_world_declares_required_systems(world):
 
 @pytest.mark.parametrize('world', WORLDS, ids=os.path.basename)
 def test_world_models_are_vendored(world):
-    uris = [(u.text or '').strip()
-            for u in ET.parse(world).getroot().findall('./world/include/uri')]
+    uris = [
+        (u.text or '').strip() for u in ET.parse(world).getroot().findall('./world/include/uri')
+    ]
     for uri in uris:
         assert uri.startswith('model://'), f'{uri}: only vendored models (offline, CI)'
-        assert os.path.isfile(os.path.join(MODELS_DIR, uri[len('model://'):], 'model.config'))
+        assert os.path.isfile(
+            os.path.join(MODELS_DIR, uri.removeprefix('model://'), 'model.config')
+        )
 
 
 @pytest.mark.parametrize('world', WORLDS, ids=os.path.basename)

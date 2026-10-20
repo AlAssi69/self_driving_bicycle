@@ -26,37 +26,56 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     xacro_file = PathJoinSubstitution(
-        [FindPackageShare('bicycle_description'), 'urdf', 'bicycle.urdf.xacro'])
+        [FindPackageShare('bicycle_description'), 'urdf', 'bicycle.urdf.xacro']
+    )
     robot_description = ParameterValue(
-        Command([
-            'xacro ', xacro_file,
-            ' use_sim:=', LaunchConfiguration('use_sim'),
-            ' hardware_plugin:=', LaunchConfiguration('hardware_plugin'),
-            ' controllers_file:=', LaunchConfiguration('controllers_file'),
-        ]),
+        Command(
+            [
+                'xacro ',
+                xacro_file,
+                ' use_sim:=',
+                LaunchConfiguration('use_sim'),
+                ' hardware_plugin:=',
+                LaunchConfiguration('hardware_plugin'),
+                ' controllers_file:=',
+                LaunchConfiguration('controllers_file'),
+            ]
+        ),
         value_type=str,
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use the simulation (/clock) time source.'),
-        DeclareLaunchArgument(
-            'use_sim', default_value='false',
-            description='Add the Gazebo ros2_control plugin to the description.'),
-        DeclareLaunchArgument(
-            'hardware_plugin', default_value='',
-            description='ros2_control system plugin; empty selects it from use_sim.'),
-        DeclareLaunchArgument(
-            'controllers_file', default_value='',
-            description='Controller parameter file loaded by gz_ros2_control (use_sim only).'),
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            output='screen',
-            parameters=[{
-                'robot_description': robot_description,
-                'use_sim_time': use_sim_time,
-            }],
-        ),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'use_sim_time',
+                default_value='false',
+                description='Use the simulation (/clock) time source.',
+            ),
+            DeclareLaunchArgument(
+                'use_sim',
+                default_value='false',
+                description='Add the Gazebo ros2_control plugin to the description.',
+            ),
+            DeclareLaunchArgument(
+                'hardware_plugin',
+                default_value='',
+                description='ros2_control system plugin; empty selects it from use_sim.',
+            ),
+            DeclareLaunchArgument(
+                'controllers_file',
+                default_value='',
+                description='Controller parameter file loaded by gz_ros2_control (use_sim only).',
+            ),
+            Node(
+                package='robot_state_publisher',
+                executable='robot_state_publisher',
+                output='screen',
+                parameters=[
+                    {
+                        'robot_description': robot_description,
+                        'use_sim_time': use_sim_time,
+                    }
+                ],
+            ),
+        ]
+    )

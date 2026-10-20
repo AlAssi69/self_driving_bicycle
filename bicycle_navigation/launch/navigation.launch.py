@@ -66,30 +66,44 @@ def generate_launch_description():
         name='lifecycle_manager_navigation',
         output='screen',
         arguments=log_level,
-        parameters=[{
-            'autostart': LaunchConfiguration('autostart'),
-            'node_names': [name for _, name, _ in NAV2_SERVERS],
-        }],
+        parameters=[
+            {
+                'autostart': LaunchConfiguration('autostart'),
+                'node_names': [name for _, name, _ in NAV2_SERVERS],
+            }
+        ],
     )
 
-    return LaunchDescription([
-        SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use the simulation (/clock) time source.'),
-        DeclareLaunchArgument(
-            'params_file',
-            default_value=PathJoinSubstitution(
-                [FindPackageShare('bicycle_navigation'), 'config', 'nav2.yaml']),
-            description='Nav2 parameter file.'),
-        DeclareLaunchArgument(
-            'autostart', default_value='true', choices=['true', 'false'],
-            description='Configure and activate the servers automatically.'),
-        DeclareLaunchArgument(
-            'log_level', default_value='info', description='Log level of the Nav2 servers.'),
-        GroupAction([
-            SetParameter('use_sim_time', LaunchConfiguration('use_sim_time')),
-            *servers,
-            lifecycle_manager,
-        ]),
-    ])
+    return LaunchDescription(
+        [
+            SetEnvironmentVariable('RCUTILS_LOGGING_BUFFERED_STREAM', '1'),
+            DeclareLaunchArgument(
+                'use_sim_time',
+                default_value='false',
+                description='Use the simulation (/clock) time source.',
+            ),
+            DeclareLaunchArgument(
+                'params_file',
+                default_value=PathJoinSubstitution(
+                    [FindPackageShare('bicycle_navigation'), 'config', 'nav2.yaml']
+                ),
+                description='Nav2 parameter file.',
+            ),
+            DeclareLaunchArgument(
+                'autostart',
+                default_value='true',
+                choices=['true', 'false'],
+                description='Configure and activate the servers automatically.',
+            ),
+            DeclareLaunchArgument(
+                'log_level', default_value='info', description='Log level of the Nav2 servers.'
+            ),
+            GroupAction(
+                [
+                    SetParameter('use_sim_time', LaunchConfiguration('use_sim_time')),
+                    *servers,
+                    lifecycle_manager,
+                ]
+            ),
+        ]
+    )

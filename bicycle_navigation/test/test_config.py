@@ -31,8 +31,7 @@ with open(os.path.join(SHARE, 'config', 'slam.yaml')) as f:
 
 # Nav2 nodes that publish or subscribe to velocity commands. In Jazzy each one must be
 # told to use TwistStamped; a single mismatch silently breaks the command chain.
-VELOCITY_NODES = ('controller_server', 'behavior_server', 'velocity_smoother',
-                  'collision_monitor')
+VELOCITY_NODES = ('controller_server', 'behavior_server', 'velocity_smoother', 'collision_monitor')
 BEHAVIOR_TREES = sorted(glob.glob(os.path.join(SHARE, 'behavior_trees', '*.xml')))
 
 
@@ -92,7 +91,7 @@ def test_bt_navigator_uses_the_bicycle_trees():
     prefix = '$(find-pkg-share bicycle_navigation)/behavior_trees/'
     for key in ('default_nav_to_pose_bt_xml', 'default_nav_through_poses_bt_xml'):
         assert bt[key].startswith(prefix)
-        assert os.path.isfile(os.path.join(SHARE, 'behavior_trees', bt[key][len(prefix):]))
+        assert os.path.isfile(os.path.join(SHARE, 'behavior_trees', bt[key].removeprefix(prefix)))
 
 
 def test_velocity_chain_topics():

@@ -29,16 +29,27 @@ def load(name):
 
 def test_controller_types():
     manager = load('bicycle_controller.yaml')['controller_manager']['ros__parameters']
-    assert manager['bicycle_controller']['type'] == \
-        'bicycle_steering_controller/BicycleSteeringController'
-    assert manager['joint_state_broadcaster']['type'] == \
-        'joint_state_broadcaster/JointStateBroadcaster'
+    assert (
+        manager['bicycle_controller']['type']
+        == 'bicycle_steering_controller/BicycleSteeringController'
+    )
+    assert (
+        manager['joint_state_broadcaster']['type']
+        == 'joint_state_broadcaster/JointStateBroadcaster'
+    )
 
 
 def test_no_deprecated_or_removed_controller_parameters():
     params = load('bicycle_controller.yaml')['bicycle_controller']['ros__parameters']
-    removed = {'use_stamped_vel', 'in_chained_mode', 'front_wheels_names', 'rear_wheels_names',
-               'front_wheel_radius', 'rear_wheel_radius', 'front_steering'}
+    removed = {
+        'use_stamped_vel',
+        'in_chained_mode',
+        'front_wheels_names',
+        'rear_wheels_names',
+        'front_wheel_radius',
+        'rear_wheel_radius',
+        'front_steering',
+    }
     assert not removed & params.keys()
 
 

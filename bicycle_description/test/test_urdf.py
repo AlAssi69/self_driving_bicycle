@@ -95,7 +95,8 @@ def test_joint_types_and_limits(sim_urdf):
     traction = joint(sim_urdf, 'traction_joint')
     assert traction.get('type') == 'continuous'
     assert float(traction.find('limit').get('velocity')) == pytest.approx(
-        GEOMETRY['traction']['max_velocity'])
+        GEOMETRY['traction']['max_velocity']
+    )
 
     front = joint(sim_urdf, 'front_wheel_joint')
     assert front.get('type') == 'continuous'
@@ -106,8 +107,10 @@ def test_joint_types_and_limits(sim_urdf):
 
 
 def test_lidar_scan_plane_clears_the_wheels(sim_urdf):
-    scan_height = (origin_xyz(joint(sim_urdf, 'base_joint'))[2]
-                   + origin_xyz(joint(sim_urdf, 'laser_joint'))[2])
+    scan_height = (
+        origin_xyz(joint(sim_urdf, 'base_joint'))[2]
+        + origin_xyz(joint(sim_urdf, 'laser_joint'))[2]
+    )
     assert scan_height == pytest.approx(GEOMETRY['lidar']['scan_height'])
     assert scan_height > 2 * GEOMETRY['wheel']['radius'] + 0.1
 
@@ -118,7 +121,8 @@ def test_lidar_sensor(sim_urdf):
     assert sensor.find('topic').text == 'scan'
     assert sensor.find('gz_frame_id').text == 'laser_frame'
     assert float(sensor.find('lidar/range/max').text) == pytest.approx(
-        GEOMETRY['lidar']['max_range'])
+        GEOMETRY['lidar']['max_range']
+    )
 
 
 def test_ros2_control_interfaces(mock_urdf):
@@ -142,8 +146,11 @@ def test_hardware_plugin_selection(sim_urdf, mock_urdf):
 
 def test_gazebo_plugin_only_in_simulation(sim_urdf, mock_urdf):
     def gz_plugins(urdf):
-        return [p for p in urdf.findall('./gazebo/plugin')
-                if p.get('filename') == 'gz_ros2_control-system']
+        return [
+            p
+            for p in urdf.findall('./gazebo/plugin')
+            if p.get('filename') == 'gz_ros2_control-system'
+        ]
 
     assert gz_plugins(mock_urdf) == []
     plugins = gz_plugins(sim_urdf)

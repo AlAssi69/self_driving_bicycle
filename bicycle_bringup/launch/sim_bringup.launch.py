@@ -41,35 +41,54 @@ def generate_launch_description():
     slam = LaunchConfiguration('slam')
     nav = LaunchConfiguration('nav')
     controllers_file = PathJoinSubstitution(
-        [FindPackageShare('bicycle_control'), 'config', 'bicycle_controller.yaml'])
-    rviz_config = PathJoinSubstitution([
-        FindPackageShare('bicycle_bringup'), 'rviz',
-        IfElseSubstitution(nav, 'navigation.rviz', 'slam.rviz'),
-    ])
+        [FindPackageShare('bicycle_control'), 'config', 'bicycle_controller.yaml']
+    )
+    rviz_config = PathJoinSubstitution(
+        [
+            FindPackageShare('bicycle_bringup'),
+            'rviz',
+            IfElseSubstitution(nav, 'navigation.rviz', 'slam.rviz'),
+        ]
+    )
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            'slam', default_value='true', choices=['true', 'false'],
-            description='Run slam_toolbox (see `mode`); required by Nav2 for map->odom.'),
-        DeclareLaunchArgument(
-            'nav', default_value='false', choices=['true', 'false'],
-            description='Run the Nav2 navigation servers.'),
-        DeclareLaunchArgument(
-            'rviz', default_value='true', choices=['true', 'false'],
-            description='Start RViz.'),
-
-        include('bicycle_description', 'description.launch.py',
-                use_sim_time='true', use_sim='true', controllers_file=controllers_file),
-        include('bicycle_gazebo', 'sim.launch.py'),
-        include('bicycle_control', 'control.launch.py', use_sim_time='true'),
-        include('bicycle_navigation', 'slam.launch.py', IfCondition(slam), use_sim_time='true'),
-        include('bicycle_navigation', 'navigation.launch.py', IfCondition(nav),
-                use_sim_time='true'),
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            arguments=['-d', rviz_config],
-            parameters=[{'use_sim_time': True}],
-            condition=IfCondition(LaunchConfiguration('rviz')),
-        ),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'slam',
+                default_value='true',
+                choices=['true', 'false'],
+                description='Run slam_toolbox (see `mode`); required by Nav2 for map->odom.',
+            ),
+            DeclareLaunchArgument(
+                'nav',
+                default_value='false',
+                choices=['true', 'false'],
+                description='Run the Nav2 navigation servers.',
+            ),
+            DeclareLaunchArgument(
+                'rviz', default_value='true', choices=['true', 'false'], description='Start RViz.'
+            ),
+            include(
+                'bicycle_description',
+                'description.launch.py',
+                use_sim_time='true',
+                use_sim='true',
+                controllers_file=controllers_file,
+            ),
+            include('bicycle_gazebo', 'sim.launch.py'),
+            include('bicycle_control', 'control.launch.py', use_sim_time='true'),
+            include(
+                'bicycle_navigation', 'slam.launch.py', IfCondition(slam), use_sim_time='true'
+            ),
+            include(
+                'bicycle_navigation', 'navigation.launch.py', IfCondition(nav), use_sim_time='true'
+            ),
+            Node(
+                package='rviz2',
+                executable='rviz2',
+                arguments=['-d', rviz_config],
+                parameters=[{'use_sim_time': True}],
+                condition=IfCondition(LaunchConfiguration('rviz')),
+            ),
+        ]
+    )

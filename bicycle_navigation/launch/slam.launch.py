@@ -40,30 +40,39 @@ def generate_launch_description():
         convert_types=True,
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use the simulation (/clock) time source.'),
-        DeclareLaunchArgument(
-            'mode', default_value='mapping', choices=['mapping', 'localization'],
-            description='Build a new map, or localize in the map given by `map`.'),
-        DeclareLaunchArgument(
-            'map', default_value=PathJoinSubstitution([share, 'maps', 'obstacles_course']),
-            description='Serialized slam_toolbox map, without extension (localization only).'),
-        IncludeLaunchDescription(
-            PathJoinSubstitution([slam_launch_dir, 'online_async_launch.py']),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-                'slam_params_file': params_file,
-            }.items(),
-            condition=UnlessCondition(localization),
-        ),
-        IncludeLaunchDescription(
-            PathJoinSubstitution([slam_launch_dir, 'localization_launch.py']),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-                'slam_params_file': localization_params_file,
-            }.items(),
-            condition=IfCondition(localization),
-        ),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                'use_sim_time',
+                default_value='false',
+                description='Use the simulation (/clock) time source.',
+            ),
+            DeclareLaunchArgument(
+                'mode',
+                default_value='mapping',
+                choices=['mapping', 'localization'],
+                description='Build a new map, or localize in the map given by `map`.',
+            ),
+            DeclareLaunchArgument(
+                'map',
+                default_value=PathJoinSubstitution([share, 'maps', 'obstacles_course']),
+                description='Serialized slam_toolbox map, without extension (localization only).',
+            ),
+            IncludeLaunchDescription(
+                PathJoinSubstitution([slam_launch_dir, 'online_async_launch.py']),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'slam_params_file': params_file,
+                }.items(),
+                condition=UnlessCondition(localization),
+            ),
+            IncludeLaunchDescription(
+                PathJoinSubstitution([slam_launch_dir, 'localization_launch.py']),
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'slam_params_file': localization_params_file,
+                }.items(),
+                condition=IfCondition(localization),
+            ),
+        ]
+    )

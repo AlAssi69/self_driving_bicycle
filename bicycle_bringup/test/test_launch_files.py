@@ -23,19 +23,32 @@ from launch.actions import DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import pytest
 
-PACKAGES = ('bicycle_description', 'bicycle_gazebo', 'bicycle_control', 'bicycle_navigation',
-            'bicycle_bringup')
+PACKAGES = (
+    'bicycle_description',
+    'bicycle_gazebo',
+    'bicycle_control',
+    'bicycle_navigation',
+    'bicycle_bringup',
+)
 
 # The arguments each launch file declares itself (included files add their own).
 LAUNCH_FILES = {
-    ('bicycle_description', 'description.launch.py'):
-        {'use_sim_time', 'use_sim', 'hardware_plugin', 'controllers_file'},
+    ('bicycle_description', 'description.launch.py'): {
+        'use_sim_time',
+        'use_sim',
+        'hardware_plugin',
+        'controllers_file',
+    },
     ('bicycle_description', 'display.launch.py'): set(),
     ('bicycle_gazebo', 'sim.launch.py'): {'world', 'headless', 'x', 'y', 'yaw'},
     ('bicycle_control', 'control.launch.py'): {'use_sim_time', 'controller_manager_timeout'},
     ('bicycle_navigation', 'slam.launch.py'): {'use_sim_time', 'mode', 'map'},
-    ('bicycle_navigation', 'navigation.launch.py'):
-        {'use_sim_time', 'params_file', 'autostart', 'log_level'},
+    ('bicycle_navigation', 'navigation.launch.py'): {
+        'use_sim_time',
+        'params_file',
+        'autostart',
+        'log_level',
+    },
     ('bicycle_bringup', 'sim_bringup.launch.py'): {'slam', 'nav', 'rviz'},
 }
 
@@ -58,7 +71,6 @@ def test_launch_file_loads_and_declares_its_arguments(package, launch_file):
     source = PythonLaunchDescriptionSource(launch_file_path(package, launch_file))
     description = source.get_launch_description(LaunchContext())
     declared = {
-        entity.name for entity in description.entities
-        if isinstance(entity, DeclareLaunchArgument)
+        entity.name for entity in description.entities if isinstance(entity, DeclareLaunchArgument)
     }
     assert declared == LAUNCH_FILES[(package, launch_file)]
