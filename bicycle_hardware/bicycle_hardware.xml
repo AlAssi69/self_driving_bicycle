@@ -1,0 +1,11 @@
+<library path="bicycle_hardware">
+  <class
+    name="bicycle_hardware/BicycleSystemHardware"
+    type="bicycle_hardware::BicycleSystemHardware"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control system of the real bicycle: the Arduino Uno (firmware/bicycle_uno) driving
+      the rear DC motor and the steering stepper over USB serial.
+    </description>
+  </class>
+</library>

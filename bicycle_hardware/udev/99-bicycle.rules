@@ -1,0 +1,17 @@
+# Stable device names for the bicycle's USB serial devices, readable by the dialout group
+# only (no root needed to run the robot). See docs/hardware.md.
+#
+#   sudo cp 99-bicycle.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#   sudo usermod -aG dialout "$USER"   # then log out and in
+#
+# If another device on the robot uses the same USB adapter chip, add its serial number
+# (udevadm info -a /dev/ttyUSB0 | grep serial) as ATTRS{serial}=="..." to the matching rule.
+
+# Arduino Uno: genuine boards (ATmega16U2) and CH340 clones.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", SYMLINK+="bicycle_arduino", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0001", SYMLINK+="bicycle_arduino", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="bicycle_arduino", GROUP="dialout", MODE="0660"
+
+# YDLIDAR X4 Pro (Silicon Labs CP210x USB adapter).
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ydlidar", GROUP="dialout", MODE="0660"

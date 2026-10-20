@@ -1,0 +1,30 @@
+# YDLIDAR X4 Pro, for ydlidar_ros2_driver (robot.repos). Values from the driver's
+# params/X4-Pro.yaml, except the port (udev/99-bicycle.rules) and the frame (the URDF's
+# laser_frame). The driver publishes /scan.
+# Check the scan orientation on the bike (docs/hardware.md): an object straight ahead must
+# appear on the +x axis of laser_frame; otherwise flip `reversion` / `inverted`.
+ydlidar_ros2_driver_node:
+  ros__parameters:
+    port: /dev/ydlidar
+    frame_id: laser_frame
+    ignore_array: ""
+    baudrate: 128000
+    lidar_type: 1
+    device_type: 0
+    isSingleChannel: true
+    intensity: false
+    intensity_bit: 0
+    sample_rate: 5
+    abnormal_check_count: 4
+    fixed_resolution: true
+    reversion: false
+    inverted: false
+    auto_reconnect: true
+    support_motor_dtr: false
+    angle_max: 180.0
+    angle_min: -180.0
+    range_max: 12.0
+    range_min: 0.1
+    frequency: 10.0
+    invalid_range_is_inf: false
+    debug: false

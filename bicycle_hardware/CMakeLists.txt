@@ -1,83 +1,85 @@
-cmake_minimum_required(VERSION 3.8)
-project(self_driving_bicycle_hw)
+cmake_minimum_required(VERSION 3.16)
+project(bicycle_hardware LANGUAGES CXX)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor)
 endif()
 
-set(THIS_PACKAGE_INCLUDE_DEPENDS
-  ament_cmake
-  hardware_interface
-  pluginlib
-  rclcpp
-  rclcpp_lifecycle
+find_package(ament_cmake REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(Threads REQUIRED)
+
+# The protocol and firmware headers of the Arduino sketch are shared with the host
+# (#include "bicycle_uno/protocol.hpp").
+set(SHARED_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/firmware
 )
 
-foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
-  find_package(${Dependency} REQUIRED)
-endforeach()
-
-## COMPILE
-add_library(
-  bicycledrive_arduino
-  SHARED
-  hardware/bicyclebot_system.cpp
+# Protocol, models, configuration and serial port, used by the plugin and the tests.
+add_library(bicycle_hardware_core STATIC
+  src/drive_model.cpp
+  src/hardware_config.cpp
+  src/protocol.cpp
+  src/serial_port.cpp
 )
-target_compile_features(bicycledrive_arduino PUBLIC cxx_std_17)
-target_include_directories(bicycledrive_arduino PUBLIC
-$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/hardware/include>
-$<INSTALL_INTERFACE:include/bicycledrive_arduino>
+set_target_properties(bicycle_hardware_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(bicycle_hardware_core PUBLIC ${SHARED_INCLUDE_DIRS})
+target_link_libraries(bicycle_hardware_core PUBLIC hardware_interface::hardware_interface)
+
+# The ros2_control plugin. No C++ API is exported: only the plugin library is installed.
+add_library(bicycle_hardware SHARED src/bicycle_system.cpp)
+target_link_libraries(bicycle_hardware PRIVATE
+  bicycle_hardware_core
+  hardware_interface::hardware_interface
+  pluginlib::pluginlib
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
 )
-ament_target_dependencies(
-  bicycledrive_arduino PUBLIC
-  ${THIS_PACKAGE_INCLUDE_DEPENDS}
-)
-target_link_libraries(bicycledrive_arduino PUBLIC serial)
+pluginlib_export_plugin_description_file(hardware_interface bicycle_hardware.xml)
 
-# Causes the visibility macros to use dllexport rather than dllimport,
-# which is appropriate when building the dll but not consuming it.
-# target_compile_definitions(${PROJECT_NAME} PRIVATE "BICYCLEDRIVE_ARDUINO_BUILDING_DLL")
-target_compile_definitions("bicycledrive_arduino" PRIVATE "BICYCLEDRIVE_ARDUINO_BUILDING_DLL")
+# Simulated Arduino on a pseudo-terminal: the tests' stand-in and a dry-run tool.
+add_library(bicycle_fake_mcu STATIC src/fake_mcu.cpp)
+target_include_directories(bicycle_fake_mcu PUBLIC ${SHARED_INCLUDE_DIRS})
+target_link_libraries(bicycle_fake_mcu PUBLIC Threads::Threads)
+add_executable(fake_mcu tools/fake_mcu_main.cpp)
+target_link_libraries(fake_mcu PRIVATE bicycle_fake_mcu)
 
-# Export hardware plugins
-pluginlib_export_plugin_description_file(hardware_interface bicycledrive_arduino.xml)
-
-# INSTALL
+install(TARGETS bicycle_hardware LIBRARY DESTINATION lib)
+install(TARGETS fake_mcu RUNTIME DESTINATION lib/${PROJECT_NAME})
 install(
-  DIRECTORY hardware/include/
-  DESTINATION include/bicycledrive_arduino
-)
-
-# install(
-#   DIRECTORY description/launch description/ros2_control description/urdf description/rviz
-#   DESTINATION share/diffdrive_arduino
-# )
-# install(
-#   DIRECTORY bringup/launch bringup/config
-#   DESTINATION share/diffdrive_arduino
-# )
-
-install(TARGETS bicycledrive_arduino
-  EXPORT export_bicycledrive_arduino
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-install(
-  DIRECTORY config hardware include launch src urdf
+  DIRECTORY config launch udev
   DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
-  set(ament_cmake_copyright_FOUND TRUE)
-  set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_firmware_core test/test_firmware_core.cpp)
+  target_include_directories(test_firmware_core PRIVATE firmware)
+
+  foreach(test_name test_drive_model test_hardware_config test_protocol)
+    ament_add_gtest(${test_name} test/${test_name}.cpp)
+    target_link_libraries(${test_name} bicycle_hardware_core)
+  endforeach()
+
+  # Loads the installed plugin through pluginlib and drives it against the fake Arduino.
+  ament_add_gtest(test_bicycle_system test/test_bicycle_system.cpp TIMEOUT 120)
+  target_link_libraries(test_bicycle_system
+    bicycle_fake_mcu
+    hardware_interface::hardware_interface
+    rclcpp::rclcpp
+    rclcpp_lifecycle::rclcpp_lifecycle
+  )
 endif()
 
-## EXPORTS
-ament_export_targets(export_bicycledrive_arduino HAS_LIBRARY_TARGET)
-ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_package()

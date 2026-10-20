@@ -1,15 +1,34 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>self_driving_bicycle_hw</name>
-  <version>1.0.0</version>
-  <description> This package includes the necessary tools and the hardware interface for the real
-    bicycle to work.</description>
+  <name>bicycle_hardware</name>
+  <version>2.0.0</version>
+  <description>
+    ros2_control hardware interface, Arduino firmware and robot-side launch of the real
+    self-driving bicycle: rear DC motor with an IR wheel encoder, steering stepper, YDLIDAR.
+  </description>
   <maintainer email="smart.teen.12345@gmail.com">Ashraf AlAssi</maintainer>
   <license>Apache-2.0</license>
+  <url type="repository">https://github.com/AlAssi69/self_driving_bicycle</url>
+  <author>Ashraf AlAssi</author>
+  <author>Mhd. Osama Keakaty</author>
+  <author>Sarah AlAhmad</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <exec_depend>bicycle_control</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- The lidar driver (ydlidar_ros2_driver) is not in rosdep: see robot.repos and
+       docs/hardware.md. It is only started with lidar:=true. -->
+
+  <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

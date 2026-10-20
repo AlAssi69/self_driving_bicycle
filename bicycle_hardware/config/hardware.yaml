@@ -1,0 +1,36 @@
+# Hardware parameters of the bicycle's ros2_control system (bicycle_hardware/BicycleSystemHardware).
+# Passed to the description as hardware_params_file and emitted as <param> tags.
+# Steering limits come from the URDF (bicycle_description/config/geometry.yaml).
+# docs/hardware.md explains how to calibrate each value on the bike.
+
+# Serial link to the Arduino Uno (firmware/bicycle_uno). udev/99-bicycle.rules creates the
+# stable device name; the baud rate must match firmware/bicycle_uno/protocol.hpp.
+device: /dev/bicycle_arduino
+baud_rate: 115200
+read_timeout_ms: 20
+# Opening the port resets the Uno; its bootloader takes about 2 s.
+startup_timeout_ms: 5000
+# Failed exchanges in a row before the hardware reports an error and the controllers stop.
+max_consecutive_errors: 5
+
+# Rear-wheel IR slot sensor.
+encoder_counts_per_rev: 8
+# Pulse periods longer than this mean the wheel stands still.
+encoder_timeout_s: 2.0
+
+# Steering stepper: steps per steering radian = steps_per_rev * microsteps * gear_ratio / 2 pi.
+# Keep firmware/bicycle_uno/config.hpp kHardLimits in sync (a test checks it).
+steering_steps_per_rev: 200
+steering_microsteps: 8
+steering_gear_ratio: 1.0
+steering_max_acceleration: 4.0  # rad/s^2
+
+# Drive motor: PWM = feedforward * wheel speed + deadband (+ PI on the measured speed),
+# clamped to max_pwm. The single-channel encoder cannot see reverse speed, so keep the PI
+# gains small; the integral term is capped at integral_limit PWM.
+drive_feedforward: 25.0  # PWM per rad/s
+drive_deadband: 25.0  # PWM
+drive_max_pwm: 150.0
+drive_kp: 0.0
+drive_ki: 0.0
+drive_integral_limit: 30.0
